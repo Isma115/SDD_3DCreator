@@ -1,4 +1,3 @@
-// #region Primitivas de geometría
 // Reúne la visibilidad de superficies, la extracción de aristas y las funciones
 // que escriben vértices de malla o de líneas en buffers planos.
 (() => {
@@ -6,7 +5,6 @@
 
   const { SDD3D } = window;
 
-  // #region Superficie visible y aristas
   // Determina qué caras y aristas de la rejilla pertenecen al exterior del modelo,
   // evitando dibujar geometría interior entre cubos contiguos.
   function isExposed(cube, normal) {
@@ -74,8 +72,6 @@
     return [...edges.values()];
   }
 
-  // #endregion Superficie visible y aristas
-  // #region Escritura de vértices y primitivas
   // Convierte caras y segmentos en el formato intercalado que consumen los shaders
   // de WebGL.
   function addMeshVertex(target, position, normal, color, uv) {
@@ -105,8 +101,6 @@
     target.push(second[0], second[1], second[2], color[0], color[1], color[2]);
   }
 
-  // #endregion Escritura de vértices y primitivas
-  // #region Límites y coordenadas de textura
   // Calcula la caja global del modelo y proyecta cualquier punto a UV para que una
   // textura cubra la escena completa sin repetirse por cubo.
   const AXES = ['x', 'y', 'z'];
@@ -164,8 +158,6 @@
     ];
   }
 
-  // #endregion Límites y coordenadas de textura
-  // #region API de geometría
   // Publica las primitivas consumidas por la malla, la rejilla y la exportación.
   SDD3D.geometry = {
     isExposed,
@@ -178,5 +170,3 @@
     worldUv
   };
 })();
-// #endregion API de geometría
-// #endregion Primitivas de geometría

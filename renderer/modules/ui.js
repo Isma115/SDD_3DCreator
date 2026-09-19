@@ -1,4 +1,3 @@
-// #region Interfaz de usuario
 // Coordina los menús, los controles de vista, el editor de textura, los avisos de
 // exportación y el cierre de elementos emergentes.
 (() => {
@@ -7,7 +6,6 @@
   const { SDD3D } = window;
   const { dom } = SDD3D;
 
-  // #region Modo y controles de vista
   // Sincroniza el modo de interacción y las opciones visuales con el estado de la
   // escena y con los atributos accesibles de los botones.
   function switchMode(mode) {
@@ -75,8 +73,6 @@
     updatePointSelectionUi();
   }
 
-  // #endregion Modo y controles de vista
-  // #region Editor de textura
   // Pinta sobre el canvas de textura y controla la apertura o cierre del modal que
   // sube los cambios a WebGL.
   function drawTextureAt(event) {
@@ -103,8 +99,6 @@
     if (SDD3D.app.state.textureDirty) SDD3D.renderer.uploadTexture();
   }
 
-  // #endregion Editor de textura
-  // #region Aviso de exportación
   // Presenta las métricas de compresión del OBJ y mantiene el modal reutilizable.
   // Aviso informativo posterior a la exportación. Muestra, por cada dato, la cifra
   // resultante de la compresión y la que tenía el modelo antes de comprimirlo.
@@ -147,8 +141,6 @@
     dom.exportModal.hidden = true;
   }
 
-  // #endregion Aviso de exportación
-  // #region Enlace de eventos
   // Conecta los controles del DOM, el lienzo de textura y la exportación con las
   // funciones de interfaz correspondientes.
   function init() {
@@ -216,8 +208,6 @@
     });
   }
 
-  // #endregion Enlace de eventos
-  // #region API de interfaz
   // Publica las acciones que invocan el arranque, la entrada y el renderer.
   SDD3D.ui = {
     init,
@@ -235,5 +225,3 @@
     drawTextureAt
   };
 })();
-// #endregion API de interfaz
-// #endregion Interfaz de usuario

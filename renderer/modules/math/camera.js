@@ -1,4 +1,3 @@
-// #region Cámara orbital y proyección
 // Calcula la posición de la cámara, su matriz combinada y las conversiones entre
 // coordenadas del puntero y del mundo 3D.
 (() => {
@@ -43,8 +42,6 @@
     };
   }
 
-  // #endregion Cámara orbital y proyección
-  // #region Direcciones y desplazamiento de cámara
   // Obtiene ejes alineados con la vista para el control WASD y el desplazamiento
   // lateral que mantiene el modelo bajo el puntero durante un paneo.
   function cameraGridDirection(vector) {
@@ -89,8 +86,6 @@
     target.z += up.z * vertical - right.z * horizontal;
   }
 
-  // #endregion Direcciones y desplazamiento de cámara
-  // #region API de cámara
   // Publica las operaciones usadas por selección, entrada y renderizado.
   SDD3D.camera = {
     position: cameraPosition,
@@ -102,4 +97,3 @@
     pan: panCamera
   };
 })();
-// #endregion API de cámara

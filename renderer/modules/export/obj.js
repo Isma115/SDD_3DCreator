@@ -1,4 +1,3 @@
-// #region Exportación a OBJ
 // Convierte la escena en una malla compacta, fusionando caras coplanares visibles
 // antes de serializar vértices y caras al formato OBJ.
 (() => {
@@ -8,7 +7,6 @@
   const { cubeFaces } = SDD3D;
   const { isExposed } = SDD3D.geometry;
 
-  // #region Orientación y ciclos de caras
   // Define los recorridos de rectángulos fusionados y conserva el sentido de
   // bobinado de cada cara unidad según su normal.
   const GRID_AXES = ['x', 'y', 'z'];
@@ -31,8 +29,6 @@
     return rotated[1][0] !== minU ? FORWARD_CYCLE : REVERSED_CYCLE;
   }
 
-  // #endregion Orientación y ciclos de caras
-  // #region Construcción de la malla exportable
   // Deduplica vértices, evita caras repetidas, fusiona superficies de cubos y añade
   // las caras propias o deducidas de las aristas.
   function buildExportMesh() {
@@ -169,8 +165,6 @@
     return { vertices, faces };
   }
 
-  // #endregion Construcción de la malla exportable
-  // #region Informe y descarga
   // Calcula las métricas que muestra la interfaz y genera la descarga del fichero
   // OBJ sin acoplar la lógica de exportación al DOM.
   // Cifras que se muestran en el aviso de exportación. "Antes" son las del modelo
@@ -216,12 +210,8 @@
     return report;
   }
 
-  // #endregion Informe y descarga
-  // #region API de exportación
   // Publica la acción de descarga y el constructor de malla para la interfaz y las
   // comprobaciones de exportación.
   SDD3D.exportObj = exportObj;
   SDD3D.buildExportMesh = buildExportMesh;
 })();
-// #endregion API de exportación
-// #endregion Exportación a OBJ

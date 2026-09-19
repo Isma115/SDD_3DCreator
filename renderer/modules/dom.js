@@ -1,4 +1,3 @@
-// #region Referencias del DOM
 // Resuelve una sola vez los elementos de la interfaz y el contexto de dibujo de
 // la textura para que los demás módulos trabajen con referencias compartidas.
 (() => {
@@ -35,4 +34,3 @@
     closeExportButton: document.getElementById('closeExportButton')
   };
 })();
-// #endregion Referencias del DOM

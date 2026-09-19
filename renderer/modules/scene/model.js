@@ -1,4 +1,3 @@
-// #region Estado del modelo 3D
 // Centraliza cubos, aristas, caras, selección y cámara para que el resto de módulos
 // consulte y modifique un único estado coherente.
 (() => {
@@ -6,7 +5,6 @@
 
   const { SDD3D } = window;
 
-  // #region Estado y sincronización de la interfaz
   // Conserva los datos mutables de la escena y las operaciones que actualizan la
   // selección o el texto de estado.
   const state = {
@@ -52,8 +50,6 @@
     setStatus(`${cubeCount} ${cubeCount === 1 ? 'bloque' : 'bloques'} · ${pointCount} puntos`);
   }
 
-  // #endregion Estado y sincronización de la interfaz
-  // #region Ciclo de vida de los cubos
   // Inicializa, añade y elimina bloques respetando la ocupación de cada casilla y
   // limpiando la selección cuando desaparece el cubo seleccionado.
   // Estado inicial del modelo: cada vez que se abre la aplicación debe existir un
@@ -83,8 +79,6 @@
     return true;
   }
 
-  // #endregion Ciclo de vida de los cubos
-  // #region Puntos, aristas y caras
   // Deriva los puntos de la escena y gestiona las conexiones y caras explícitas que
   // alimentan la selección, el renderizado, el historial y la exportación.
   function getModelPoints() {
@@ -151,8 +145,6 @@
     return state.faces;
   }
 
-  // #endregion Puntos, aristas y caras
-  // #region API del modelo
   // Expone únicamente las operaciones que otros módulos necesitan para trabajar con
   // el estado sin acceder a detalles internos adicionales.
   SDD3D.app = {
@@ -173,5 +165,3 @@
     setFaces
   };
 })();
-// #endregion API del modelo
-// #endregion Estado del modelo 3D

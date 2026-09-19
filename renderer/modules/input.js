@@ -1,4 +1,3 @@
-// #region Entrada del usuario
 // Coordina los gestos del lienzo, la colocación y el borrado de bloques, la
 // selección de puntos, el zoom y los atajos de teclado.
 (() => {
@@ -8,7 +7,6 @@
   const { dom } = SDD3D;
   const { camera } = SDD3D;
 
-  // #region Colocación mediante teclado
   // Traduce WASD a direcciones de rejilla según la orientación actual de la cámara
   // y agrupa la colocación con el cambio de selección en una sola acción.
   // Coloca un bloque en la dirección de la cámara a partir del bloque seleccionado.
@@ -68,8 +66,6 @@
     SDD3D.app.setStatus(`Bloque colocado: ${key.toUpperCase()}`);
   }
 
-  // #endregion Colocación mediante teclado
-  // #region Clicks sobre el lienzo
   // Decide si un click izquierdo se ejecuta de inmediato o espera solo cuando puede
   // confundirse con el primer click de un doble click sobre un punto.
   // Acción de un click sin arrastre: elimina (modo Mouse) o selecciona (modo Teclado)
@@ -105,8 +101,6 @@
     scheduleCanvasClick.timer = setTimeout(() => applyCanvasClick(event), SDD3D.DOUBLE_CLICK_GUARD_MS);
   }
 
-  // #endregion Clicks sobre el lienzo
-  // #region Gestos y atajos
   // Enlaza los eventos de puntero, rueda, doble click y teclado con las operaciones
   // del modelo, la cámara, la selección y el historial.
   function init() {
@@ -236,11 +230,7 @@
     });
   }
 
-  // #endregion Gestos y atajos
-  // #region API de entrada
   // Expone la inicialización de listeners y la colocación WASD para el arranque del
   // renderer y para las pruebas de interacción.
   SDD3D.input = { init, keyboardPlace };
 })();
-// #endregion API de entrada
-// #endregion Entrada del usuario

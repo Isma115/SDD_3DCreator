@@ -1,4 +1,3 @@
-// #region Operaciones básicas de vectores 3D
 // Agrupa las operaciones escalares y geométricas mínimas que comparten la cámara,
 // la selección y la construcción de normales.
 (() => {
@@ -29,4 +28,3 @@
 
   SDD3D.vec3 = { subtract: vec3Subtract, cross: vec3Cross, dot: vec3Dot, normalize: vec3Normalize };
 })();
-// #endregion Operaciones básicas de vectores 3D

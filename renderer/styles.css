@@ -1,4 +1,3 @@
-/* #region Base y tema */
 /* Define la paleta general, el modelo de caja y las reglas comunes de controles
    para que toda la aplicación comparta la misma base visual. */
 :root {
@@ -75,9 +74,6 @@ button {
   outline-offset: 2px;
 }
 
-/* #endregion Base y tema */
-/* #region Barra de herramientas y menús */
-/* #region Barra de herramientas y menús */
 /* Estiliza la navegación superior, sus botones, el indicador de modo y los menús
    desplegables de controles y visualización. */
 /* Archivo: renderer/styles.css */
@@ -232,8 +228,6 @@ button {
   }
 }
 
-/* #endregion Barra de herramientas y menús */
-/* #region Área de edición 3D */
 /* Reserva el espacio del canvas y coloca el mensaje de estado sobre la escena sin
    interceptar los eventos del puntero. */
 .viewport-area {
@@ -268,8 +262,6 @@ button {
   pointer-events: none;
 }
 
-/* #endregion Área de edición 3D */
-/* #region Modales y editor de textura */
 /* Presenta los paneles superpuestos y los controles para dibujar o importar el
    mapa de textura. */
 .modal {
@@ -457,8 +449,6 @@ button {
   }
 }
 
-/* #endregion Modales y editor de textura */
-/* #region Estadísticas de exportación */
 /* Da formato al texto de confirmación y a la tabla de cifras del OBJ generado. */
 .file-button {
   margin-left: auto;
@@ -510,8 +500,6 @@ button {
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-/* #endregion Estadísticas de exportación */
-/* #region Accesibilidad y ajustes finos */
 /* Respeta la preferencia del sistema de reducir movimiento y afina las barras de
    desplazamiento para que no rompan la estética oscura. */
 @media (prefers-reduced-motion: reduce) {
@@ -540,4 +528,3 @@ button {
   background: rgba(255, 255, 255, 0.26);
   background-clip: content-box;
 }
-/* #endregion Accesibilidad y ajustes finos */

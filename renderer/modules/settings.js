@@ -1,4 +1,3 @@
-// #region Configuración persistida de la aplicación
 // Guarda y recupera las opciones de vista, control y cámara, tolerando ficheros
 // incompletos o inválidos sin impedir que el editor arranque.
 //
@@ -10,7 +9,6 @@
 
   const { SDD3D } = window;
 
-  // #region Estado, validación y valores por defecto
   // Define el formato persistido y filtra cada campo antes de incorporarlo al estado
   // activo.
   // Versión del formato guardado. Un fichero de otra versión se ignora en lugar de
@@ -92,8 +90,6 @@
     return settings;
   }
 
-  // #endregion Estado, validación y valores por defecto
-  // #region Lectura y escritura de preferencias
   // Encapsula el puente con Electron y evita que un error de lectura o escritura
   // afecte al funcionamiento de la sesión.
   function readFile() {
@@ -165,8 +161,6 @@
     save();
   }
 
-  // #endregion Lectura y escritura de preferencias
-  // #region Aplicación e inicialización
   // Vuelve a dejar el modelo y la interfaz en el estado guardado. El orden importa:
   // primero el modelo, luego los ajustes que refrescan los botones del menú, después
   // el modo —que elige qué bloque queda seleccionado— y por último el bloque de
@@ -208,11 +202,7 @@
     return settings;
   }
 
-  // #endregion Aplicación e inicialización
-  // #region API de configuración
   // Publica los puntos de entrada que utilizan la interfaz, la entrada y el ciclo
   // de vida de la ventana.
   SDD3D.settings = { init, save, scheduleSave, flush, apply, defaultSettings };
 })();
-// #endregion API de configuración
-// #endregion Configuración persistida de la aplicación

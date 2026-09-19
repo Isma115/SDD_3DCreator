@@ -1,4 +1,3 @@
-// #region Construcción de la rejilla 3D
 // La rejilla no se compone de líneas sueltas: son tres planos translúcidos —el suelo
 // y los dos planos de los ejes— y el patrón de líneas lo calcula el sombreador de
 // fragmentos. Al no haber líneas que se solapen, cada píxel recibe como mucho un trazo
@@ -57,9 +56,6 @@
     ];
   }
 
-  // #endregion Construcción de la rejilla 3D
-  // #region API de rejilla
   // Expone el constructor de planos que consume el bucle de renderizado.
   SDD3D.grid = { buildPlanes };
 })();
-// #endregion API de rejilla

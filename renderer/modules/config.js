@@ -1,15 +1,12 @@
-// #region Namespace compartido
 // Todos los módulos del renderer colaboran a través de este único objeto global,
 // creado antes de cargar cualquier dependencia.
 window.SDD3D = window.SDD3D || {};
-// #endregion Namespace compartido
 
 (() => {
   'use strict';
 
   const { SDD3D } = window;
 
-  // #region Configuración visual y de interacción
   // Reúne colores, límites de cámara y umbrales comunes para que el comportamiento
   // de la interfaz y del renderizado se pueda ajustar desde un solo lugar.
   SDD3D.COLORS = {
@@ -57,9 +54,7 @@ window.SDD3D = window.SDD3D || {};
   // así que solo ese click espera, para no borrar el bloque de debajo del punto. El
   // resto de clicks se aplican al momento.
   SDD3D.DOUBLE_CLICK_GUARD_MS = 220;
-  // #endregion Configuración visual y de interacción
 
-  // #region Geometría base del cubo
   // Define las caras, esquinas y aristas del cubo unidad que reutilizan la malla,
   // la selección y el cálculo de superficies visibles.
   // Caras del cubo unidad: normales y esquinas en orden antihorario visto desde fuera.
@@ -102,5 +97,4 @@ window.SDD3D = window.SDD3D || {};
     [4, 5], [5, 6], [6, 7], [7, 4],
     [0, 4], [1, 5], [2, 6], [3, 7]
   ];
-  // #endregion Geometría base del cubo
 })();

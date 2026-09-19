@@ -1,4 +1,3 @@
-// #region Picking desde el puntero
 // Convierte la posición del puntero en un rayo 3D y resuelve intersecciones con
 // cubos o puntos de unión visibles.
 (() => {
@@ -7,7 +6,6 @@
   const { SDD3D } = window;
   const { vec3, matrices, camera } = SDD3D;
 
-  // #region Construcción e intersección del rayo
   // Reconstruye un rayo desde la matriz inversa de cámara y aplica el algoritmo de
   // intersección por intervalos para cada cubo unidad.
   function screenRay(clientX, clientY) {
@@ -73,8 +71,6 @@
     };
   }
 
-  // #endregion Construcción e intersección del rayo
-  // #region Resolución de objetivos en pantalla
   // Elige el cubo más cercano al puntero o el punto proyectado más próximo dentro
   // del umbral visual de selección.
   function pickCube(clientX, clientY) {
@@ -106,10 +102,6 @@
     return result && result.point;
   }
 
-  // #endregion Resolución de objetivos en pantalla
-  // #region API de picking
   // Publica las consultas usadas por los manejadores de entrada y selección.
   SDD3D.picking = { screenRay, rayBoxIntersection, pickCube, nearestPoint };
 })();
-// #endregion API de picking
-// #endregion Picking desde el puntero

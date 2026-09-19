@@ -1,4 +1,3 @@
-// #region Matrices de cámara
 // Construye las matrices de vista y proyección que convierten el espacio 3D en
 // coordenadas que WebGL puede dibujar.
 (() => {
@@ -29,8 +28,6 @@
     ]);
   }
 
-  // #endregion Matrices de cámara
-  // #region Álgebra y transformación de matrices
   // Ofrece las operaciones de composición, inversión y transformación necesarias
   // para renderizar y reconstruir rayos desde la pantalla.
   function multiplyMatrices(a, b) {
@@ -93,8 +90,6 @@
     ];
   }
 
-  // #endregion Álgebra y transformación de matrices
-  // #region API matemática pública
   // Expone las operaciones con nombres semánticos para el resto del renderer.
   SDD3D.matrices = {
     lookAt,
@@ -104,4 +99,3 @@
     transformVector
   };
 })();
-// #endregion API matemática pública

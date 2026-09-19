@@ -1,4 +1,3 @@
-// #region Historial de deshacer y rehacer
 // Guarda fotogramas completos del modelo en lugar de operaciones inversas, de modo
 // que cualquier cambio efectivo pueda deshacerse aunque lo origine otro módulo.
 (() => {
@@ -7,7 +6,6 @@
   const { SDD3D } = window;
   const { app, names } = SDD3D;
 
-  // #region Estado y snapshots
   // Mantiene el límite de memoria, el cursor activo y las copias independientes
   // que permiten restaurar un estado sin compartir referencias mutables.
   // Tope de fotogramas guardados. Se conservan los más recientes para acotar la
@@ -51,9 +49,7 @@
     app.setSelectedCube(snapshot.selectedCube);
     SDD3D.selection.setPointPath(snapshot.pointPath.map(copyPoint));
   }
-  // #endregion Estado y snapshots
 
-  // #region Registro y navegación
   // Registra cambios efectivos, descarta la rama rehacible al crear una acción nueva
   // y ofrece navegación agrupada para operaciones compuestas.
   // Guarda el estado actual como último fotograma. La llama la envoltura después de
@@ -100,9 +96,7 @@
       if (wasRecording) commit();
     }
   }
-  // #endregion Registro y navegación
 
-  // #region Inicialización y API pública
   // Arranca el historial en el estado inicial, conecta las operaciones del modelo y
   // publica los controles de deshacer/rehacer para la entrada de usuario.
   // Arranca el historial tomando el modelo ya inicializado como estado de partida:
@@ -151,5 +145,3 @@
     canRedo: () => history.index < history.entries.length - 1
   };
 })();
-// #endregion Inicialización y API pública
-// #endregion Historial de deshacer y rehacer
