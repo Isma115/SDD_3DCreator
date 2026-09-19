@@ -15,9 +15,9 @@
   SDD3D.input.init();
 
   SDD3D.app.updateCountStatus();
-  // La configuración guardada se aplica la última, cuando la interfaz ya está
-  // enlazada: puede refrescar los botones del menú y volver a poner el modo y el
-  // bloque de partida de la sesión anterior.
+  // La configuración de interfaz se aplica cuando el DOM ya está enlazado. El fichero
+  // de modelo solo se recupera mediante la acción explícita "Cargar".
   SDD3D.settings.init();
+  SDD3D.modelFile.init();
   SDD3D.renderer.start();
 })();

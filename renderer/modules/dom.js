@@ -16,6 +16,8 @@
     controlsMenu: document.getElementById('controlsMenu'),
     viewMenuButton: document.getElementById('viewMenuButton'),
     viewMenu: document.getElementById('viewMenu'),
+    saveButton: document.getElementById('saveButton'),
+    loadButton: document.getElementById('loadButton'),
     cubeLinesItem: document.getElementById('cubeLinesItem'),
     pointsButton: document.getElementById('pointsButton'),
     clearPointsButton: document.getElementById('clearPointsButton'),

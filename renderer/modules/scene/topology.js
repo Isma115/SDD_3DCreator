@@ -210,7 +210,7 @@
   // de triángulos que lo dibuja no sale nunca por fuera de la cara. El ciclo debe
   // llegar en sentido antihorario en los ejes del plano.
   function isConvexLoop(loop, uAxis, vAxis) {
-    if (loop.length < 4) return false;
+    if (loop.length < 3) return false;
     if (new Set(loop.map(SDD3D.names.keyOf)).size !== loop.length) return false;
     for (let index = 0; index < loop.length; index += 1) {
       const previous = loop[(index - 1 + loop.length) % loop.length];

@@ -335,7 +335,8 @@
 
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
-    gl.clearColor(0.063, 0.075, 0.098, 1);
+    // Fondo de la vista 3D alineado con el fondo del tema #303030 de la interfaz.
+    gl.clearColor(0.188, 0.188, 0.188, 1);
 
     requestAnimationFrame(render);
   }

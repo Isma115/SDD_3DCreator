@@ -50,16 +50,17 @@
     dom.pointsButton.setAttribute('aria-pressed', String(state.pointsVisible));
     dom.pointsButton.textContent = state.pointsVisible ? 'Ocultar puntos' : 'Ver puntos';
     if (!state.pointsVisible) {
-      state.pointPath = [];
-      updatePointSelectionUi();
+      SDD3D.selection.clearPointSelection();
     }
     SDD3D.app.setStatus(state.pointsVisible ? 'Puntos visibles' : 'Puntos ocultos');
     SDD3D.settings.scheduleSave();
   }
 
-  // El botón de deseleccionar solo se muestra mientras haya algún punto seleccionado.
+  // El botón de deseleccionar aparece mientras haya un punto seleccionado o una cara
+  // pendiente de ampliar con un cuarto punto.
   function updatePointSelectionUi() {
-    dom.clearPointsButton.hidden = SDD3D.app.state.pointPath.length === 0;
+    dom.clearPointsButton.hidden = SDD3D.app.state.pointPath.length === 0 &&
+      !SDD3D.selection.hasFacePath();
   }
 
   // Pone los botones de las opciones de vista en el estado que tiene el modelo. Lo usa
@@ -144,6 +145,8 @@
   // Conecta los controles del DOM, el lienzo de textura y la exportación con las
   // funciones de interfaz correspondientes.
   function init() {
+    dom.saveButton.addEventListener('click', SDD3D.modelFile.saveModel);
+    dom.loadButton.addEventListener('click', SDD3D.modelFile.loadModel);
     dom.controlsMenuButton.addEventListener('click', toggleControlsMenu);
     dom.controlsMenu.querySelectorAll('[data-mode]').forEach((button) => {
       button.addEventListener('click', () => switchMode(button.dataset.mode));

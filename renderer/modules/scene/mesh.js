@@ -34,8 +34,8 @@
     return points.map(SDD3D.names.keyOf).sort().join('|');
   }
 
-  // Caras propias del modelo: las creadas al unir cuatro puntos y las que cierran las
-  // aristas dibujadas (ver modules/scene/topology.js). Una cara que repite otra —por
+  // Caras propias del modelo: las creadas al unir tres o cuatro puntos y las que
+  // cierran las aristas dibujadas (ver modules/scene/topology.js). Una cara que repite otra —por
   // ejemplo el cuadrado que cierran las cuatro aristas de unión de una cara de
   // bloque— no se dibuja dos veces.
   function modelFaces() {

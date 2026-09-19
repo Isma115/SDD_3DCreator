@@ -56,6 +56,13 @@
   // bloque en el centro de la rejilla, del que poder partir con cualquiera de los
   // dos controles. Se apoya en addCube para no duplicar la validación de ocupación.
   function init() {
+    // El arranque no reutiliza el estado de ninguna sesión anterior: siempre crea
+    // una escena nueva con un único cubo central.
+    state.cubes.clear();
+    state.edges = [];
+    state.faces = [];
+    state.selectedCube = null;
+    state.pointPath = [];
     addCube({ x: 0, y: 0, z: 0 }, 'Bloque central creado');
   }
 
@@ -136,6 +143,25 @@
     return true;
   }
 
+  // Quita una cara propia por su huella. Se usa para sustituir un triángulo provisional
+  // por un cuadrilátero si el usuario añade un cuarto punto.
+  function removeFace(points) {
+    const signature = faceSignature(points);
+    const index = state.faces.findIndex((face) => faceSignature(face) === signature);
+    if (index < 0) return false;
+    state.faces.splice(index, 1);
+    return true;
+  }
+
+  // Sustituye una cara propia conservando una sola operación en el historial.
+  function replaceFace(previous, replacement) {
+    const signature = faceSignature(previous);
+    const index = state.faces.findIndex((face) => faceSignature(face) === signature);
+    if (index < 0) return false;
+    state.faces[index] = replacement.map((point) => ({ ...point }));
+    return true;
+  }
+
   // Reemplaza las caras del modelo. Cada cara guarda sus propios puntos, copiados uno
   // a uno: los objetos de la lista recibida se reutilizan entre operaciones y una
   // cara que compartiera esas referencias cambiaría sola. Lo usa la configuración
@@ -162,6 +188,8 @@
     hasFace,
     addEdge,
     addFace,
+    removeFace,
+    replaceFace,
     setFaces
   };
 })();

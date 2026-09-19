@@ -47,6 +47,7 @@
     state.edges = snapshot.edges.map((edge) => [copyPoint(edge[0]), copyPoint(edge[1])]);
     state.faces = snapshot.faces.map((face) => face.map(copyPoint));
     app.setSelectedCube(snapshot.selectedCube);
+    SDD3D.selection.resetFacePath();
     SDD3D.selection.setPointPath(snapshot.pointPath.map(copyPoint));
   }
 
@@ -128,13 +129,13 @@
   }
 
   // El modelo no avisa de sus cambios, así que sus operaciones se envuelven aquí.
-  // Las cuatro son la única vía de modificación del modelo, de modo que un fotograma
-  // por operación basta para deshacer y rehacer bloques, aristas y caras. Elegir el
+  // Son la única vía de modificación del modelo, de modo que un fotograma por
+  // operación basta para deshacer y rehacer bloques, aristas y caras. Elegir el
   // bloque de partida no genera entrada propia: es un cursor, y cada fotograma ya
   // guarda cuál estaba seleccionado, así que deshacer deja la selección de antes.
   // El historial no cubre la cámara ni el mapa de textura: las Specs solo piden
   // deshacer y rehacer los cambios del modelo 3D.
-  ['addCube', 'removeCube', 'addEdge', 'addFace'].forEach(wrapModelChange);
+  ['addCube', 'removeCube', 'addEdge', 'addFace', 'removeFace', 'replaceFace'].forEach(wrapModelChange);
 
   SDD3D.history = {
     init,

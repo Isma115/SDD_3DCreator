@@ -189,7 +189,7 @@ Al momento de Exportar el modelo 3D debe aparecer una ventana informativa que in
 Al tratar de exportar el modelo, aún así tiene más vértices, puntos y caras de los necesarios, trata de darle solución a esto
 
 ## Cara al unir varios puntos
-- Estado: Activa
+- Estado: Implementada
 - Categoría: Funcional
 
 Al unir varios puntos llegará un momento que entre los puntos se puede formar una cara, tiene que calcularse si la unión de puntos sería capaz de formar una cara, y de ser así que se refleje la cara en el modelo 3D
@@ -207,7 +207,40 @@ Usando los controles de teclado, si quiero colocar un cubo dónde ya hay un cubo
 La textura que se pinta debe aplicarse a todo el modelo en general, no a cada cubo independiente
 
 ## Configuración
-- Estado: Activa
+- Estado: Implementada
 - Categoría: Funcional
 
 La configuración que se vaya especificando en la aplicación haciendo uso del menú superior debe irse guardandose y cargandose cada vez que se vuelva a ejecutar la aplicación
+
+## Versión 0.0.4
+
+## Estilo Blender
+- Estado: Implementada
+- Categoría: Diseño
+- Color: Amarillo
+
+Cambia la interfaz para que sea ligeramente similar a Blender colores, formas de los componentes, sin ningún borde redondeado, etc.
+
+## Reinicio de la aplicación
+- Estado: Implementada
+- Categoría: Funcional
+- Color: Azul
+
+Cada vez que se abra la aplicación se debe ver el cubo por defecto siempre, no debe aparecer rastro de modelos anteriores
+
+## Guardar modelo
+- Estado: Implementada
+- Categoría: Funcional
+
+Permite guardar un modelo y cargarlo en el entorno
+
+Al querer cerrar la ventana pregunta al usuario si quiere guardar el modelo actual (en caso de que no lo haya guardado anteriormente
+
+## Versión 0.0.5
+
+## Cerrar ventana
+- Estado: Activa
+- Categoría: Fix
+- Color: Rojo
+
+Al cerrar la ventana y darle a no guardar el modelo o en su defecto guardarlo antes de salir, la ventana no se cierra del todo

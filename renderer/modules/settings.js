@@ -32,11 +32,6 @@
     return typeof value === 'number' && Number.isFinite(value);
   }
 
-  // Un punto de rejilla válido: tres coordenadas enteras.
-  function isGridPoint(value) {
-    return isPlainObject(value) && ['x', 'y', 'z'].every((axis) => Number.isInteger(value[axis]));
-  }
-
   // El centro de la cámara no es un punto de rejilla: desplazarla arrastrando con el
   // click derecho lo deja en coordenadas con decimales, así que solo se exige que las
   // tres sean números finitos.
@@ -60,16 +55,14 @@
         pitch: state.camera.pitch,
         distance: state.camera.distance,
         target: copyPoint(state.camera.target)
-      },
-      selectedCube: state.selectedCube ? copyPoint(state.selectedCube) : null,
-      faces: state.faces.map((face) => face.map(copyPoint))
+      }
     };
   }
 
   // Comprueba lo leído y se queda solo con lo que tiene un valor válido. Cada ajuste
   // que no lo sea se descarta por separado: el resto de la configuración se aplica
-  // igual. La lista de coordenadas heredada de una versión anterior se convierte en
-  // caras y, si no se puede leer entera, se descarta: media lista sería otra forma.
+  // igual. La geometría se excluye de este fichero y solo vive en los modelos que el
+  // usuario guarda y carga explícitamente.
   function sanitize(raw) {
     if (!isPlainObject(raw) || raw.version !== VERSION) return null;
     const settings = defaultSettings();
@@ -82,11 +75,8 @@
       }
       if (isFinitePoint(raw.camera.target)) settings.camera.target = copyPoint(raw.camera.target);
     }
-    if (isGridPoint(raw.selectedCube)) settings.selectedCube = copyPoint(raw.selectedCube);
-    if (Array.isArray(raw.faces) && raw.faces.every((face) =>
-      Array.isArray(face) && face.length >= 3 && face.every(isGridPoint))) {
-      settings.faces = raw.faces.map((face) => face.map(copyPoint));
-    }
+    // La configuración no recupera geometría ni selección: los modelos guardados se
+    // cargan únicamente mediante la acción explícita "Cargar".
     return settings;
   }
 
@@ -136,10 +126,6 @@
       distance: SDD3D.app.state.camera.distance,
       target: copyPoint(SDD3D.app.state.camera.target)
     };
-    settings.selectedCube = SDD3D.app.state.selectedCube
-      ? copyPoint(SDD3D.app.state.selectedCube)
-      : null;
-    settings.faces = SDD3D.app.state.faces.map((face) => face.map(copyPoint));
     stored = settings;
     writeFile(settings);
   }
@@ -161,10 +147,8 @@
     save();
   }
 
-  // Vuelve a dejar el modelo y la interfaz en el estado guardado. El orden importa:
-  // primero el modelo, luego los ajustes que refrescan los botones del menú, después
-  // el modo —que elige qué bloque queda seleccionado— y por último el bloque de
-  // partida.
+  // Vuelve a dejar las preferencias de interfaz en el estado guardado, pero conserva
+  // únicamente el cubo inicial del arranque: la geometría anterior no se restaura.
   function apply(settings) {
     const state = SDD3D.app.state;
     state.showCubeLines = settings.showCubeLines;
@@ -175,14 +159,15 @@
       distance: settings.camera.distance,
       target: copyPoint(settings.camera.target)
     };
-    SDD3D.app.setFaces(settings.faces);
-    // La selección de puntos no se guarda: es un trazo a medias, no configuración.
+    state.cubes = new Map([['0,0,0', { x: 0, y: 0, z: 0 }]]);
+    state.edges = [];
+    SDD3D.app.setFaces([]);
+    SDD3D.app.setSelectedCube(null);
+    SDD3D.selection.resetFacePath();
     SDD3D.selection.setPointPath([]);
     SDD3D.ui.refreshToggleStates();
     SDD3D.ui.switchMode(settings.mode);
-    // El bloque de partida se recupera solo si sigue existiendo: un fichero editado a
-    // mano no debe dejar la selección en una casilla vacía.
-    SDD3D.app.setSelectedCube(settings.selectedCube ? SDD3D.app.cubeAt(settings.selectedCube) : null);
+    SDD3D.app.updateCountStatus();
   }
 
   function init() {
