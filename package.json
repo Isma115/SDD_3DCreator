@@ -1,0 +1,12 @@
+{
+  "name": "sdd-3d-creator",
+  "version": "0.1.0",
+  "description": "Editor 3D por bloques definido por SDD_specs.",
+  "main": "main.js",
+  "scripts": {
+    "dev": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^39.0.0"
+  }
+}

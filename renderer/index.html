@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:;"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SDD 3D Creator</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="toolbar">
+        <div class="brand">SDD 3D Creator</div>
+
+        <nav class="toolbar-actions" aria-label="Herramientas">
+          <div class="menu-wrap">
+            <button id="controlsMenuButton" class="toolbar-button" type="button" aria-expanded="false">
+              Controles
+            </button>
+            <div id="controlsMenu" class="dropdown" hidden>
+              <button class="dropdown-item" type="button" data-mode="mouse">Mouse</button>
+              <button class="dropdown-item" type="button" data-mode="keyboard">Teclado</button>
+            </div>
+          </div>
+          <div class="menu-wrap">
+            <button id="viewMenuButton" class="toolbar-button" type="button" aria-expanded="false">
+              Ver
+            </button>
+            <div id="viewMenu" class="dropdown" hidden>
+              <button
+                id="cubeLinesItem"
+                class="dropdown-item"
+                type="button"
+                aria-pressed="true"
+                data-option="cubeLines"
+              >
+                Líneas de cubos
+              </button>
+            </div>
+          </div>
+          <button id="textureButton" class="toolbar-button" type="button">Textura</button>
+          <button id="pointsButton" class="toolbar-button" type="button" aria-pressed="false">
+            Ver puntos
+          </button>
+          <button id="clearPointsButton" class="toolbar-button" type="button" hidden>
+            Deseleccionar puntos
+          </button>
+          <button id="exportButton" class="toolbar-button" type="button">Exportar</button>
+        </nav>
+
+        <div id="modeLabel" class="mode-label">Mouse</div>
+      </header>
+
+      <main class="viewport-area">
+        <canvas id="viewport" aria-label="Espacio 3D de edición"></canvas>
+        <div id="status" class="status" role="status" aria-live="polite">0 bloques · 0 puntos</div>
+      </main>
+    </div>
+
+    <section id="textureModal" class="modal" hidden aria-labelledby="textureTitle">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2 id="textureTitle">Textura</h2>
+          <button id="closeTextureButton" class="close-button" type="button" aria-label="Cerrar">×</button>
+        </div>
+        <canvas id="textureCanvas" width="256" height="256" aria-label="Mapa de textura 2D"></canvas>
+        <div class="texture-controls">
+          <label class="control-label" for="paintColor">Color</label>
+          <input id="paintColor" type="color" value="#5bd6c1" />
+          <label class="control-label" for="brushSize">Tamaño</label>
+          <input id="brushSize" type="range" min="2" max="48" value="14" />
+          <label class="file-button" for="textureFile">Importar</label>
+          <input id="textureFile" type="file" accept="image/*" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Aviso informativo de la exportación: los valores los rellena modules/ui.js
+         con las cifras que devuelve la compresión del modelo. -->
+    <section id="exportModal" class="modal" hidden aria-labelledby="exportTitle">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2 id="exportTitle">Modelo exportado</h2>
+          <button id="closeExportButton" class="close-button" type="button" aria-label="Cerrar">×</button>
+        </div>
+        <p class="modal-text" id="exportSummary"></p>
+        <p class="modal-text">Resultado de la compresión del modelo:</p>
+        <dl class="export-stats" id="exportStats"></dl>
+      </div>
+    </section>
+
+    <!-- Módulos en orden de dependencias: cada uno registra su parte en window.SDD3D. -->
+    <script src="modules/config.js"></script>
+    <script src="modules/names.js"></script>
+    <script src="modules/math/vectors.js"></script>
+    <script src="modules/math/matrices.js"></script>
+    <script src="modules/scene/model.js"></script>
+    <script src="modules/math/camera.js"></script>
+    <script src="modules/dom.js"></script>
+    <script src="modules/scene/geometry.js"></script>
+    <script src="modules/scene/grid.js"></script>
+    <script src="modules/scene/mesh.js"></script>
+    <script src="modules/picking.js"></script>
+    <script src="modules/renderer/renderer.js"></script>
+    <script src="modules/export/obj.js"></script>
+    <script src="modules/selection.js"></script>
+    <script src="modules/history.js"></script>
+    <script src="modules/ui.js"></script>
+    <script src="modules/input.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
