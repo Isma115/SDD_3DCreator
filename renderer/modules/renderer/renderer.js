@@ -92,36 +92,91 @@
       uniform mat4 uViewProjection;
       uniform float uPointSize;
       varying vec3 vColor;
-      varying highp vec3 vPosition;
       void main() {
         gl_Position = uViewProjection * vec4(aPosition, 1.0);
         gl_PointSize = uPointSize;
         vColor = aColor;
+      }
+    `,
+    `
+      precision mediump float;
+      varying vec3 vColor;
+      void main() {
+        gl_FragColor = vec4(vColor, 1.0);
+      }
+    `
+  );
+
+  // La rejilla es un patrón analítico: el fragmento decide si está sobre una línea a
+  // partir de su posición de mundo, así que el trazo se mide en píxeles (fwidth) y no
+  // se acumula por muchas líneas que caigan en el mismo píxel. La rejilla fina se apaga
+  // cuando sus líneas se juntan más de unos pocos píxeles y deja paso a la gruesa; más
+  // lejos, el fundido por distancia apaga también la gruesa. `fwidth` necesita la
+  // extensión OES_standard_derivatives, que ofrecen todos los WebGL donde se ejecuta la
+  // aplicación: si faltara, se omite la rejilla en lugar de romper el arranque.
+  const standardDerivatives = gl.getExtension('OES_standard_derivatives');
+  const gridProgram = standardDerivatives ? createProgram(
+    `
+      attribute vec3 aPosition;
+      uniform mat4 uViewProjection;
+      varying highp vec3 vPosition;
+      void main() {
+        gl_Position = uViewProjection * vec4(aPosition, 1.0);
         vPosition = aPosition;
       }
     `,
     `
+      #extension GL_OES_standard_derivatives : enable
       #ifdef GL_FRAGMENT_PRECISION_HIGH
       precision highp float;
       #else
       precision mediump float;
       #endif
-      varying vec3 vColor;
       varying highp vec3 vPosition;
+      uniform int uPlane;
+      uniform vec3 uColor;
       uniform float uAlpha;
-      uniform vec3 uCameraPosition;
+      uniform float uMinorStep;
+      uniform float uMajorStep;
       uniform float uFadeStart;
       uniform float uFadeEnd;
+      uniform vec3 uCameraPosition;
+
+      // Coordenadas de mundo que forman el patrón de cada plano: el suelo usa xz y los
+      // planos de los ejes, xy y zy.
+      vec2 planeCoordinates(vec3 position) {
+        if (uPlane == 0) return position.xz;
+        if (uPlane == 1) return position.xy;
+        return position.zy;
+      }
+
+      // Cobertura de la rejilla de paso step: 1 en el centro de una línea y 0 al
+      // alejarse de ella. La distancia se mide en píxeles (fwidth), de modo que el
+      // trazo mide siempre lo mismo en pantalla, y la rejilla se apaga cuando sus
+      // líneas se juntan más que spacingStart–spacingEnd píxeles, que es cuando ya
+      // no se distinguen y solo quedaría una banda.
+      float gridCoverage(vec2 coordinates, float step, float spacingStart, float spacingEnd) {
+        vec2 cells = coordinates / step;
+        vec2 derivative = max(fwidth(cells), vec2(1e-5));
+        vec2 distanceInPixels = abs(fract(cells - 0.5) - 0.5) / derivative;
+        float line = 1.0 - min(min(distanceInPixels.x, distanceInPixels.y), 1.0);
+        float spacingInPixels = 1.0 / max(max(derivative.x, derivative.y), 1e-5);
+        return line * smoothstep(spacingStart, spacingEnd, spacingInPixels);
+      }
+
       void main() {
-        float distanceToCamera = length(uCameraPosition - vPosition);
-        float fade = 1.0 - smoothstep(uFadeStart, uFadeEnd, distanceToCamera);
-        gl_FragColor = vec4(vColor, uAlpha * fade);
+        vec2 coordinates = planeCoordinates(vPosition);
+        float minor = gridCoverage(coordinates, uMinorStep, 3.0, 8.0);
+        float major = gridCoverage(coordinates, uMajorStep, 2.0, 5.0);
+        float fade = 1.0 - smoothstep(uFadeStart, uFadeEnd, distance(uCameraPosition, vPosition));
+        gl_FragColor = vec4(uColor, uAlpha * max(minor, major) * fade);
       }
     `
-  );
+  ) : null;
 
   const meshBuffer = gl.createBuffer();
   const lineBuffer = gl.createBuffer();
+  const gridBuffer = gl.createBuffer();
   const meshLocations = {
     position: gl.getAttribLocation(meshProgram, 'aPosition'),
     normal: gl.getAttribLocation(meshProgram, 'aNormal'),
@@ -135,12 +190,20 @@
     position: gl.getAttribLocation(lineProgram, 'aPosition'),
     color: gl.getAttribLocation(lineProgram, 'aColor'),
     viewProjection: gl.getUniformLocation(lineProgram, 'uViewProjection'),
-    pointSize: gl.getUniformLocation(lineProgram, 'uPointSize'),
-    alpha: gl.getUniformLocation(lineProgram, 'uAlpha'),
-    cameraPosition: gl.getUniformLocation(lineProgram, 'uCameraPosition'),
-    fadeStart: gl.getUniformLocation(lineProgram, 'uFadeStart'),
-    fadeEnd: gl.getUniformLocation(lineProgram, 'uFadeEnd')
+    pointSize: gl.getUniformLocation(lineProgram, 'uPointSize')
   };
+  const gridLocations = gridProgram ? {
+    position: gl.getAttribLocation(gridProgram, 'aPosition'),
+    viewProjection: gl.getUniformLocation(gridProgram, 'uViewProjection'),
+    plane: gl.getUniformLocation(gridProgram, 'uPlane'),
+    color: gl.getUniformLocation(gridProgram, 'uColor'),
+    alpha: gl.getUniformLocation(gridProgram, 'uAlpha'),
+    minorStep: gl.getUniformLocation(gridProgram, 'uMinorStep'),
+    majorStep: gl.getUniformLocation(gridProgram, 'uMajorStep'),
+    fadeStart: gl.getUniformLocation(gridProgram, 'uFadeStart'),
+    fadeEnd: gl.getUniformLocation(gridProgram, 'uFadeEnd'),
+    cameraPosition: gl.getUniformLocation(gridProgram, 'uCameraPosition')
+  } : null;
 
   // #endregion Shaders, programas y buffers
   // #region Textura del modelo
@@ -196,8 +259,33 @@
     gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 11);
   }
 
-  // El fundido por distancia solo se aplica al grid; el resto de líneas se dibujan opacas.
-  function drawLines(vertices, viewProjection, mode, pointSize, fade) {
+  // La rejilla se dibuja en tres planos translúcidos, cada uno con su patrón de líneas
+  // calculado en el sombreador. Los planos se centran en la cámara, así que siempre
+  // cubren la zona visible y la rejilla parece infinita aunque el modelo se desplace.
+  function drawGrid(viewProjection) {
+    if (!gridProgram) return;
+    const eye = camera.position();
+    gl.useProgram(gridProgram);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gridBuffer);
+    gl.enableVertexAttribArray(gridLocations.position);
+    gl.vertexAttribPointer(gridLocations.position, 3, gl.FLOAT, false, 0, 0);
+    gl.uniformMatrix4fv(gridLocations.viewProjection, false, viewProjection);
+    gl.uniform3f(gridLocations.cameraPosition, eye.x, eye.y, eye.z);
+    gl.uniform3fv(gridLocations.color, SDD3D.COLORS.grid);
+    gl.uniform1f(gridLocations.alpha, SDD3D.GRID_ALPHA);
+    gl.uniform1f(gridLocations.minorStep, SDD3D.GRID_MINOR_STEP);
+    gl.uniform1f(gridLocations.majorStep, SDD3D.GRID_MAJOR_STEP);
+    gl.uniform1f(gridLocations.fadeStart, SDD3D.GRID_FADE_START);
+    gl.uniform1f(gridLocations.fadeEnd, SDD3D.GRID_FADE_END);
+    for (const plane of SDD3D.grid.buildPlanes(eye)) {
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(plane.vertices), gl.DYNAMIC_DRAW);
+      gl.uniform1i(gridLocations.plane, plane.index);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, plane.vertices.length / 3);
+    }
+  }
+
+  // El resto de líneas (aristas, contornos y puntos) se dibujan opacas.
+  function drawLines(vertices, viewProjection, mode, pointSize) {
     if (!vertices.length) return;
     gl.useProgram(lineProgram);
     gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
@@ -209,11 +297,6 @@
     gl.vertexAttribPointer(lineLocations.color, 3, gl.FLOAT, false, stride, 3 * Float32Array.BYTES_PER_ELEMENT);
     gl.uniformMatrix4fv(lineLocations.viewProjection, false, viewProjection);
     gl.uniform1f(lineLocations.pointSize, pointSize);
-    gl.uniform1f(lineLocations.alpha, fade ? SDD3D.GRID_ALPHA : 1);
-    gl.uniform1f(lineLocations.fadeStart, fade ? SDD3D.GRID_FADE_START : SDD3D.CAMERA_FAR);
-    gl.uniform1f(lineLocations.fadeEnd, fade ? SDD3D.GRID_FADE_END : SDD3D.CAMERA_FAR + 1);
-    const eye = camera.position();
-    gl.uniform3f(lineLocations.cameraPosition, eye.x, eye.y, eye.z);
     gl.drawArrays(mode, 0, vertices.length / 6);
   }
 
@@ -237,7 +320,7 @@
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false);
-    drawLines(SDD3D.grid.buildLines(), viewProjection, gl.LINES, 1, true);
+    drawGrid(viewProjection);
     gl.depthMask(true);
     gl.disable(gl.BLEND);
     drawMesh(mesh.buildMeshVertices(), viewProjection);

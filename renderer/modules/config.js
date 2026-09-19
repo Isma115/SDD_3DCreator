@@ -24,13 +24,19 @@ window.SDD3D = window.SDD3D || {};
     gridAxis: [0.27, 0.35, 0.4]
   };
 
-  // La rejilla se dibuja semitransparente y con una extensión mayor que el plano lejano
-  // de la cámara (100), de forma que su borde nunca entre en la vista y parezca infinita.
+  // La rejilla se dibuja semitransparente («una opacidad casi 0»), repartida en tres
+  // planos translúcidos cuyo patrón de líneas calcula el sombreador de fragmentos.
+  // Al no ser líneas sueltas, cada píxel recibe como mucho un trazo por plano y la
+  // acumulación de líneas lejanas no puede formar una sombra.
   SDD3D.GRID_ALPHA = 0.1;
-  SDD3D.GRID_EXTENT = 160;
-  // Las líneas del grid se desvanecen con la distancia a la cámara para que la
-  // acumulación de líneas lejanas no forme una sombra sobre el suelo. El fundido
-  // termina antes del plano lejano, así que tampoco se ve un borde de rejilla.
+  // Separación del patrón, en unidades de rejilla: la rejilla fina y la gruesa que la
+  // sustituye cuando la fina se junta tanto en pantalla que ya no se distingue.
+  SDD3D.GRID_MINOR_STEP = 1;
+  SDD3D.GRID_MAJOR_STEP = 10;
+  // Hasta esta distancia de la cámara las líneas se ven enteras; a partir de ahí se
+  // desvanecen hasta desaparecer. El fundido termina antes del plano lejano (100), así
+  // que tampoco se ve un borde de rejilla, y es también el radio con el que los planos
+  // se centran en la cámara para que la rejilla parezca infinita.
   SDD3D.GRID_FADE_START = 5;
   SDD3D.GRID_FADE_END = 90;
   SDD3D.CAMERA_FAR = 100;
