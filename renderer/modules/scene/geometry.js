@@ -132,6 +132,15 @@
     return { axis, uAxis: remaining[0], vAxis: remaining[1] };
   }
 
+  // Coordenada de un punto en un eje de la rejilla. Los puntos del modelo son objetos
+  // `{ x, y, z }`, pero la malla arma las esquinas de cada cara como arrays
+  // `[x, y, z]` (ver modules/scene/mesh.js), así que la lectura por nombre de eje tiene
+  // en cuenta las dos formas. Sin esto, un punto en array devolvía `undefined` y todas
+  // las coordenadas de textura salían NaN: la textura no llegaba a verse en el modelo.
+  function axisValue(point, axis) {
+    return Array.isArray(point) ? point[AXES.indexOf(axis)] : point[axis];
+  }
+
   // Coordenadas de textura de un punto vistas desde la dirección de la cara. Se
   // reparten con la caja del modelo, así que el mapa de textura cubre el modelo
   // entero: agrandar el modelo estira la textura en vez de repetirla por bloque.
@@ -139,8 +148,8 @@
     const width = bounds.max[axes.uAxis] - bounds.min[axes.uAxis] || 1;
     const height = bounds.max[axes.vAxis] - bounds.min[axes.vAxis] || 1;
     return [
-      (point[axes.uAxis] - bounds.min[axes.uAxis]) / width,
-      (point[axes.vAxis] - bounds.min[axes.vAxis]) / height
+      (axisValue(point, axes.uAxis) - bounds.min[axes.uAxis]) / width,
+      (axisValue(point, axes.vAxis) - bounds.min[axes.vAxis]) / height
     ];
   }
 

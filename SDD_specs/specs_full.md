@@ -157,7 +157,7 @@ Divide el código en responsabilidades para que la lógica no dependan de unos p
 ## Versión 0.0.2
 
 ## Mini cubos visuales
-- Estado: Activa
+- Estado: Implementada
 - Categoría: Diseño
 
 En los cubos aparece como una rejilla de minicubos que no quiero que aparezca, los cubos deben verse lisos, pero parece solo ser un error visual
@@ -179,3 +179,35 @@ Crea controles Ctrl+z y Ctrl+y para Deshacer y Rehacer
 - Categoría: Funcional
 
 Al momento de Exportar el modelo 3D debe aparecer una ventana informativa que indique la cantidad nueva de vértices, caras, puntos, etc resultantes de haber realizado la compresión
+
+## Versión 0.0.3
+
+## Mejora de compresión de modelo
+- Estado: Implementada
+- Categoría: Funcional
+
+Al tratar de exportar el modelo, aún así tiene más vértices, puntos y caras de los necesarios, trata de darle solución a esto
+
+## Cara al unir varios puntos
+- Estado: Activa
+- Categoría: Funcional
+
+Al unir varios puntos llegará un momento que entre los puntos se puede formar una cara, tiene que calcularse si la unión de puntos sería capaz de formar una cara, y de ser así que se refleje la cara en el modelo 3D
+
+## Cubo entremedias
+- Estado: Activa
+- Categoría: Funcional
+
+Usando los controles de teclado, si quiero colocar un cubo dónde ya hay un cubo, no se va a colocar uno nuevo sino que se va a seleccionar ese cubo que hay en medio para así poder continuar añadiendo cubos desde ahí
+
+## Textura
+- Estado: Activa
+- Categoría: Funcional
+
+La textura que se pinta debe aplicarse a todo el modelo en general, no a cada cubo independiente
+
+## Configuración
+- Estado: Activa
+- Categoría: Funcional
+
+La configuración que se vaya especificando en la aplicación haciendo uso del menú superior debe irse guardandose y cargandose cada vez que se vuelva a ejecutar la aplicación

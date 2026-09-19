@@ -617,3 +617,60 @@ Sin ejecutar la aplicación y sin ejecutar ninguna prueba, según lo pedido:
   convexa.
 - Repaso manual de la textura: con un bloque las UV siguen siendo 0 y 1, así que el
   aspecto de un modelo de un solo bloque no cambia.
+
+## Corrección · El texturizado del modelo completo no se veía
+
+Aviso recibido: «El texturizado del modelo 3D completo no funciona». No es un
+requisito nuevo: es un fallo de la implementación de la Decisión 26 (el requisito
+«Textura» de `0.0.3.md` conserva su Estado y su Color intactos, como el resto de
+campos de los documentos de Spec).
+
+### Decisión 30 · La coordenada de un punto en un array (Funcional)
+
+Causa: `geometry.worldUv` repartía el mapa leyendo la coordenada del punto por
+nombre de eje (`point[axes.uAxis]`, es decir `point['x']`), pero `mesh.js` arma las
+esquinas de cada cara como arrays `[x, y, z]`: las de las caras de bloque salen de
+`cubeFaces[].corners` y las de las caras propias se convierten a array al pasarlas
+al vértice. Un array no tiene propiedades `x`, `y` ni `z`, así que la lectura
+devolvía `undefined` y las dos coordenadas de textura salían `NaN` en todos los
+vértices de la malla (36 en un bloque, comprobado). `texture2D` con coordenadas
+`NaN` no tiene resultado definido en WebGL, de modo que lo pintado en el mapa no
+llegaba a afectar al modelo: el síntoma era exactamente «la textura no hace nada»,
+ni con un bloque ni con varios.
+
+Solución: `geometry.axisValue(point, axis)` lee la coordenada por el índice del eje
+cuando el punto es un array y por nombre cuando es un objeto `{x, y, z}`, y
+`worldUv` la usa para las dos coordenadas. Se corrige en la primitiva compartida
+—que es la que fija el contrato de los ejes— y no en `mesh.js`, para que cualquier
+constructor de buffers que pase los puntos en array obtenga las mismas UV.
+
+No se ha cambiado nada más: ni la caja del modelo, ni los ejes de proyección, ni el
+reparto por el modelo entero (la Decisión 26 sigue siendo el criterio), ni el
+shader, ni el pincel, ni la importación de texturas, ni la exportación (que no
+lleva coordenadas de textura).
+
+Fichero tocado: `renderer/modules/scene/geometry.js`, el único modificado.
+
+### Decisión 31 · Comprobaciones realizadas
+
+Cargando los mismos ficheros del renderer en un motor Chromium con WebGL, en una
+ventana headless, y leyendo el estado del modelo y los píxeles dibujados. El arnés
+vive en un directorio temporal fuera del proyecto: no se ha añadido ninguna prueba
+al repositorio y no se ha llegado a abrir la aplicación Electron.
+
+- Un bloque: los 36 vértices llevan UV finitas y exactamente los valores 0 y 1, así
+  que un modelo de un solo bloque se sigue viendo como antes.
+- Dos bloques pegados: la cara superior del bloque de la izquierda va de u=0 a
+  u=0.5 y la del bloque de la derecha de u=0.5 a u=1. El mapa cubre el modelo
+  entero y no se repite por bloque, que es lo que pide la Spec.
+- Mapa pintado por cuadrantes (rojo, verde, azul y amarillo) visto desde arriba: los
+  cuatro colores aparecen en las caras superiores, cada bloque con la mitad del mapa
+  que le toca por su posición. Antes de la corrección, ese mismo mapa no cambiaba
+  ni un píxel del modelo.
+- El resto del recorrido sigue funcionando: pintar en el mapa con eventos de puntero
+  reales, colocar bloques con WASD, deshacer y exportar, sin errores de JavaScript
+  ni de WebGL (`gl.getError()` en 0).
+
+Recordatorio de uso: Electron no recarga los scripts de un renderer ya arrancado
+(véase el mismo aviso en la comprobación de la exportación). Para ver la corrección
+hay que reiniciar la aplicación o recargarla con `Cmd+R`.
