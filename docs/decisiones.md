@@ -745,3 +745,78 @@ a abrir la aplicación Electron.
 
 Recordatorio de uso: Electron no recarga los scripts de un renderer ya arrancado; para
 ver el cambio hay que reiniciar la aplicación o recargarla con `Cmd+R`.
+
+## Corrección · La deducción de caras no producía ninguna cara
+
+El requisito «Cara al unir varios puntos» de `0.0.3.md` sigue con su `- Estado: Activa`
+y no se ha tocado ningún fichero de Spec. Al repasar la implementación de la
+Decisión 24 se comprobó que `SDD3D.topology.boundaryFaces()` devolvía siempre una
+lista vacía, de modo que la cara pedida por la Spec nunca llegaba a reflejarse.
+
+### Decisión 34 · Diagnóstico y corrección de la geometría de los planos
+
+Causa principal: `drawnEdgesByPlane` buscaba el eje del trazo con
+`GRID_AXES.find((axis) => first[axis] === second[axis])`. El predicado devuelve el
+primer eje en el que los dos extremos **coinciden**, no el eje en el que difieren, así
+que la diferencia de longitud que se medía a continuación era siempre 0 y todos los
+trazos se descartaban antes de llegar a ningún plano. El resto del módulo arrastraba
+errores que quedaban ocultos por ese primero:
+
+1. Los planos a los que pertenece un trazo son los de normal los **dos ejes
+   perpendiculares** al trazo, no el eje del propio trazo; y en cada plano el trazo
+   está en la cara que une las capas `coordenada - 1` y `coordenada`, es decir, en
+   las dos vistas (signo positivo y negativo) de esa misma cara.
+2. `sideKey` devolvía la clave del lado cruzado al avanzar: el lado que se cruza al
+   avanzar en `u` discurre en `v`, y al revés. Estaba al revés, así que las claves de
+   las casillas y las de los trazos no coincidían y los contornos se encadenaban con
+   aristas que no eran las dibujadas.
+3. `isSurfaceCell` no distinguía el signo: con signo negativo comprobaba el bloque de
+   la capa de abajo en lugar del de arriba, de modo que podía dar por superficie
+   casillas vacías.
+4. `orderLoop` convertía las claves en puntos con la capa inferior del plano cuando
+   la cara está en la capa siguiente, y devolvía el ciclo repitiendo la esquina
+   inicial: tanto `smoothLoop` como `isConvexLoop` recorrían el ciclo con ese punto
+   duplicado y descartaban hasta un cuadrado.
+5. El conjunto de casillas visitadas se compartía entre planos: la misma coordenada
+   local de un plano bloqueaba la región de otro.
+
+Corrección aplicada, conservando la arquitectura y el sentido de la Decisión 24:
+
+- `drawnEdgesByPlane` reparte cada trazo entre los dos planos que lo contienen, en
+  las dos vistas de la cara donde está, y rechaza las diagonales (las que difieren en
+  más de un eje), que no son el lado de ninguna casilla.
+- Un trazo **largo** (dos puntos no contiguos de la rejilla unidos a mano) aporta un
+  lado por cada tramo unidad que recorre, en lugar de descartarse. La Spec habla de
+  «unir varios puntos» sin exigir que sean contiguos; sin esto, un cuadrado cerrado
+  con cuatro trazos de dos tramos no formaría cara.
+- `sideKey` y `sideEdgeKey` vuelven a ser inversas: la clave de un lado es su esquina
+  de menor `(u, v)` y el eje que recorre.
+- `isSurfaceCell` distingue el bloque de la capa del plano según el signo.
+- `orderLoop` construye el ciclo sin repetir la esquina inicial, y el contorno se
+  normaliza a sentido antihorario en los ejes del plano antes de medir la convexidad;
+  los puntos se invierten al final si la cara mira al sentido negativo del eje, para
+  que el bobinado coincida con la normal (lo respeta la exportación).
+- Las casillas visitadas se cuentan por plano.
+
+Se mantienen como estaban, por ser decisiones constatadas: la deducción sobre las
+casillas de la superficie expuesta (Decisión 24), el descarte de contornos abiertos,
+no convexos o con vértices de más de dos lados, la deduplicación frente a caras ya
+creadas y el comportamiento de la exportación (las caras deducidas que coinciden con
+una cara unidad de bloque siguen sin duplicarse).
+
+Fichero tocado: `renderer/modules/scene/topology.js`, el único modificado. El
+requisito «Configuración» se revisó sin cambios: `settings.js` ya guarda y carga el
+modo, las opciones de vista, la cámara, el bloque de partida y las caras a través del
+puente `preload.js`/`main.js`, y las llamadas a `scheduleSave` están en los puntos de
+cambio de la interfaz y de la entrada (Decisión 27).
+
+### Decisión 35 · Comprobaciones realizadas
+
+Sin ejecutar la aplicación y sin ejecutar ninguna prueba sobre los cambios, según lo
+pedido: solo `node --check renderer/modules/scene/topology.js` y repaso estático del
+recorrido de una cara unidad (el trazo llega al plano, la casilla es de superficie, la
+frontera cierra, el ciclo no repite esquinas, el contorno convexo se orienta a la
+normal y la cara sale con sus puntos en la capa de la cara).
+
+La Spec `0.0.3.md` no se ha editado: ni sus textos, ni sus campos `- Estado: ...` (el
+requisito sigue con `- Estado: Activa`), ni sus campos `- Color: ...`.

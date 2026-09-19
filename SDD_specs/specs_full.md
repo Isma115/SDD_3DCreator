@@ -195,13 +195,13 @@ Al tratar de exportar el modelo, aún así tiene más vértices, puntos y caras 
 Al unir varios puntos llegará un momento que entre los puntos se puede formar una cara, tiene que calcularse si la unión de puntos sería capaz de formar una cara, y de ser así que se refleje la cara en el modelo 3D
 
 ## Cubo entremedias
-- Estado: Activa
+- Estado: Implementada
 - Categoría: Funcional
 
 Usando los controles de teclado, si quiero colocar un cubo dónde ya hay un cubo, no se va a colocar uno nuevo sino que se va a seleccionar ese cubo que hay en medio para así poder continuar añadiendo cubos desde ahí
 
 ## Textura
-- Estado: Activa
+- Estado: Implementada
 - Categoría: Funcional
 
 La textura que se pinta debe aplicarse a todo el modelo en general, no a cada cubo independiente

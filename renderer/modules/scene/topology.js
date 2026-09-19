@@ -1,4 +1,3 @@
-// #region Deducción de caras topológicas
 // Reconstruye caras planas y convexas a partir de las aristas dibujadas y de la
 // superficie expuesta de los cubos, sin almacenarlas como estado independiente.
 //
@@ -17,7 +16,6 @@
 
   const { SDD3D } = window;
 
-  // #region Coordenadas y claves de planos
   // Traduce entre ejes del espacio 3D y coordenadas locales de cada plano, y crea
   // claves estables para lados y aristas compartidas.
   const GRID_AXES = ['x', 'y', 'z'];
@@ -31,82 +29,88 @@
     return { axis, uAxis: (axis + 1) % 3, vAxis: (axis + 2) % 3 };
   }
 
-  function pointAt(axes, layer, u, v) {
+  // Coordenada de la cara de un plano. Un plano es la cara común de dos capas de
+  // rejilla, y sus casillas están en la capa siguiente a su capa inferior, tanto si
+  // son las de abajo (signo positivo) como si son las de arriba (signo negativo).
+  function faceCoordinate(plane) {
+    return plane.layer + 1;
+  }
+
+  function pointAt(axes, coordinate, u, v) {
     const point = { x: 0, y: 0, z: 0 };
-    point[GRID_AXES[axes.axis]] = layer;
+    point[GRID_AXES[axes.axis]] = coordinate;
     point[GRID_AXES[axes.uAxis]] = u;
     point[GRID_AXES[axes.vAxis]] = v;
     return point;
   }
 
-  // Clave de un lado de casilla: su esquina de menor (u, v) y la dirección que
-  // recorre. Dos casillas contiguas del mismo plano comparten la misma clave.
+  // Clave de un lado de casilla: su esquina de menor (u, v) y el eje que recorre. El
+  // lado que cruza una casilla al avanzar en u es el que va en v, y al revés. Dos
+  // casillas contiguas del mismo plano comparten la misma clave.
   function sideKey(u, v, du, dv) {
-    return `${u + Math.min(du, 0)},${v + Math.min(dv, 0)},${du !== 0 ? 'u' : 'v'}`;
+    return `${u + Math.max(du, 0)},${v + Math.max(dv, 0)},${du !== 0 ? 'v' : 'u'}`;
   }
 
-  function sideEdgeKey(axes, layer, key) {
+  // Arista de rejilla del lado, en la coordenada de cara del plano.
+  function sideEdgeKey(axes, coordinate, key) {
     const [u, v, direction] = key.split(',');
-    const start = pointAt(axes, layer, Number(u), Number(v));
+    const start = pointAt(axes, coordinate, Number(u), Number(v));
     const end = direction === 'u'
-      ? pointAt(axes, layer, Number(u) + 1, Number(v))
-      : pointAt(axes, layer, Number(u), Number(v) + 1);
+      ? pointAt(axes, coordinate, Number(u) + 1, Number(v))
+      : pointAt(axes, coordinate, Number(u), Number(v) + 1);
     return SDD3D.names.edgeKeyOf(start, end);
   }
 
-  // #endregion Coordenadas y claves de planos
-  // #region Aristas por plano y superficie
   // Agrupa las aristas por plano y filtra las casillas que realmente pertenecen a
   // la superficie visible del modelo.
-  // Aristas dibujadas de cada plano. Un plano es el hueco entre dos capas de rejilla
-  // visto en un sentido: las casillas de normal positiva son las que quedan por
-  // debajo del hueco y las de normal negativa las que quedan por encima. Una arista
-  // va en el hueco que hay por encima de su capa y en el que hay por debajo, así que
-  // cuenta en los dos planos.
+  // Aristas dibujadas de cada plano. Una arista de rejilla es el lado de las
+  // casillas de los dos planos que la contienen: los de normal los otros dos ejes.
+  // En cada uno de esos planos la arista está en la cara de la capa que le da
+  // coordenada, así que cuenta en las dos vistas de esa cara: la del bloque de abajo
+  // (signo positivo) y la del bloque de arriba (signo negativo). Un trazo largo
+  // aporta un lado por cada tramo unidad que recorre; las diagonales no son el lado
+  // de ninguna casilla y no cuentan.
   function drawnEdgesByPlane(state) {
     const byPlane = new Map();
     for (const edge of state.edges) {
       const first = edge[0];
       const second = edge[1];
-      const along = GRID_AXES.find((axis) => first[axis] === second[axis]);
-      if (!along) continue;
-      const low = first[along] < second[along] ? first : second;
-      const high = low === first ? second : first;
-      // Los recorridos de teclado pueden unir esquinas opuestas de una cara: esas
-      // diagonales no son el lado de ninguna casilla y aquí no cuentan.
-      if (high[along] - low[along] !== 1) continue;
-      const axis = GRID_AXES.indexOf(along);
-      const axes = gridAxesOf(axis);
-      const layer = low[along];
-      const u = low[GRID_AXES[axes.uAxis]];
-      const v = low[GRID_AXES[axes.vAxis]];
-      // La arista recorre el eje u del plano cuando su eje de rejilla es ese mismo u.
-      const key = axis === axes.uAxis ? `${u},${v},u` : `${u},${v},v`;
-      for (const sign of AXIS_SIGNS) {
-        const planeKey = `${axis}|${layer + (sign > 0 ? -1 : 0)}|${sign}`;
-        if (!byPlane.has(planeKey)) byPlane.set(planeKey, new Set());
-        byPlane.get(planeKey).add(key);
+      const alongAxes = GRID_AXES.filter((axis) => first[axis] !== second[axis]);
+      if (alongAxes.length !== 1) continue;
+      const along = alongAxes[0];
+      const edgeAxis = GRID_AXES.indexOf(along);
+      const start = first[along] < second[along] ? first : second;
+      const end = start === first ? second : first;
+      for (let step = start[along]; step < end[along]; step += 1) {
+        for (let axis = 0; axis < 3; axis += 1) {
+          if (axis === edgeAxis) continue;
+          const planeAxes = gridAxesOf(axis);
+          const layer = start[GRID_AXES[axis]] - 1;
+          const key = edgeAxis === planeAxes.uAxis
+            ? `${step},${start[GRID_AXES[planeAxes.vAxis]]},u`
+            : `${start[GRID_AXES[planeAxes.uAxis]]},${step},v`;
+          for (const sign of AXIS_SIGNS) {
+            const planeKey = `${axis}|${layer}|${sign}`;
+            if (!byPlane.has(planeKey)) byPlane.set(planeKey, new Set());
+            byPlane.get(planeKey).add(key);
+          }
+        }
       }
     }
     return byPlane;
   }
 
   // Una casilla del plano es de la superficie si el bloque que la ocupa no tiene
-  // vecino en el sentido de la normal.
+  // vecino al otro lado de la cara: el de debajo en las casillas de normal positiva
+  // y el de arriba en las de normal negativa.
   function isSurfaceCell(plane, u, v) {
     const cubes = SDD3D.app.state.cubes;
-    const behind = plane.layer;
-    for (const layer of [behind, behind + 1]) {
-      if (cubes.has(SDD3D.names.keyOf(pointAt(plane, layer, u, v)))) {
-        const exposed = plane.sign > 0 ? behind + 1 : behind - 1;
-        return !cubes.has(SDD3D.names.keyOf(pointAt(plane, exposed, u, v)));
-      }
-    }
-    return false;
+    const cellLayer = plane.sign > 0 ? plane.layer : plane.layer + 1;
+    const neighborLayer = plane.sign > 0 ? plane.layer + 1 : plane.layer;
+    if (!cubes.has(SDD3D.names.keyOf(pointAt(plane, cellLayer, u, v)))) return false;
+    return !cubes.has(SDD3D.names.keyOf(pointAt(plane, neighborLayer, u, v)));
   }
 
-  // #endregion Aristas por plano y superficie
-  // #region Regiones y contornos
   // Recorre cada región cerrada y encadena sus lados para obtener un ciclo de puntos
   // candidato a cara.
   // Recorre una zona del plano: sus casillas y las aristas dibujadas de su frontera.
@@ -142,34 +146,33 @@
 
   // Encadena los lados de la frontera para formar el ciclo de la cara. Se exige que
   // cada esquina una exactamente dos lados y que el ciclo pase por ella una sola vez:
-  // si no, la región se descarta.
+  // si no, la región se descarta. El ciclo no repite la esquina inicial.
   function orderLoop(plane, boundary) {
+    const coordinate = faceCoordinate(plane);
     const byVertex = new Map();
     for (const key of boundary) {
-      for (const pointKey of sideEdgeKey(plane, plane.layer, key).split('|')) {
+      for (const pointKey of sideEdgeKey(plane, coordinate, key).split('|')) {
         if (!byVertex.has(pointKey)) byVertex.set(pointKey, []);
         byVertex.get(pointKey).push(key);
       }
     }
     for (const sides of byVertex.values()) if (sides.length !== 2) return null;
     const startKey = boundary.values().next().value;
-    const startPointKey = sideEdgeKey(plane, plane.layer, startKey).split('|')[0];
+    const [startPointKey, nextPointKey] = sideEdgeKey(plane, coordinate, startKey).split('|');
     const loop = [SDD3D.names.pointFromKey(startPointKey)];
     let usedKey = startKey;
-    let lastPointKey = sideEdgeKey(plane, plane.layer, startKey).split('|')[1];
+    let lastPointKey = nextPointKey;
     while (loop.length <= boundary.size) {
+      if (lastPointKey === startPointKey) return loop.length === boundary.size ? loop : null;
       loop.push(SDD3D.names.pointFromKey(lastPointKey));
-      if (lastPointKey === startPointKey) return loop.length === boundary.size + 1 ? loop : null;
       const [firstSide, secondSide] = byVertex.get(lastPointKey);
       usedKey = firstSide === usedKey ? secondSide : firstSide;
-      const ends = sideEdgeKey(plane, plane.layer, usedKey).split('|');
+      const ends = sideEdgeKey(plane, coordinate, usedKey).split('|');
       lastPointKey = ends[0] === lastPointKey ? ends[1] : ends[0];
     }
     return null;
   }
 
-  // #endregion Regiones y contornos
-  // #region Validación geométrica y caras finales
   // Simplifica los contornos, comprueba orientación y convexidad, y descarta las
   // regiones abiertas o ambiguas antes de devolverlas al renderer o al exportador.
   function polygonArea(points, uAxis, vAxis) {
@@ -204,7 +207,8 @@
   }
 
   // Un ciclo solo sirve como cara si no repite esquinas y es convexo: así el abanico
-  // de triángulos que lo dibuja no sale nunca por fuera de la cara.
+  // de triángulos que lo dibuja no sale nunca por fuera de la cara. El ciclo debe
+  // llegar en sentido antihorario en los ejes del plano.
   function isConvexLoop(loop, uAxis, vAxis) {
     if (loop.length < 4) return false;
     if (new Set(loop.map(SDD3D.names.keyOf)).size !== loop.length) return false;
@@ -225,17 +229,17 @@
     return true;
   }
 
-  // #endregion Validación geométrica y caras finales
-  // #region API de topología
   // Expone el cálculo bajo demanda de las caras deducidas.
   function boundaryFaces() {
     const state = SDD3D.app.state;
     const drawnByPlane = drawnEdgesByPlane(state);
     const faces = [];
-    const visited = new Set();
     for (const [planeKey, drawn] of drawnByPlane) {
       const [axis, layer, sign] = planeKey.split('|').map(Number);
       const plane = { ...gridAxesOf(axis), layer, sign };
+      // Las casillas se marcan por plano: la misma coordenada local no es la misma
+      // casilla en dos planos distintos.
+      const visited = new Set();
       for (const side of drawn) {
         const [u, v] = side.split(',').map(Number);
         if (visited.has(`${u},${v}`)) continue;
@@ -245,12 +249,18 @@
         if (!region.complete) continue;
         const loop = orderLoop(plane, region.boundary);
         if (!loop) continue;
-        if (polygonArea(loop, plane.uAxis, plane.vAxis) <= 0) continue;
-        const corners = smoothLoop(loop, plane.uAxis, plane.vAxis);
+        const area = polygonArea(loop, plane.uAxis, plane.vAxis);
+        if (area === 0) continue;
+        // El contorno se ordena en sentido antihorario en los ejes del plano para que
+        // la convexidad se mida siempre igual, y al final se invierte si la cara mira
+        // al sentido negativo del eje, de modo que el bobinado de los puntos coincida
+        // con la normal.
+        const oriented = area > 0 ? loop : [...loop].reverse();
+        const corners = smoothLoop(oriented, plane.uAxis, plane.vAxis);
         if (!isConvexLoop(corners, plane.uAxis, plane.vAxis)) continue;
         const normal = { x: 0, y: 0, z: 0 };
         normal[GRID_AXES[axis]] = sign;
-        faces.push({ normal, points: corners });
+        faces.push({ normal, points: sign > 0 ? corners : [...corners].reverse() });
       }
     }
     return faces;
@@ -258,5 +268,3 @@
 
   SDD3D.topology = { boundaryFaces };
 })();
-// #endregion API de topología
-// #endregion Deducción de caras topológicas
