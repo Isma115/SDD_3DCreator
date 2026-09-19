@@ -80,11 +80,16 @@
     );
   }
 
-  function addQuad(target, points, normal, color) {
-    const uvs = [[0, 1], [1, 1], [1, 0], [0, 0]];
-    const triangles = [[0, 1, 2], [0, 2, 3]];
-    for (const triangle of triangles) {
-      for (const index of triangle) addMeshVertex(target, points[index], normal, color, uvs[index]);
+  // Cara convexa con sus coordenadas de textura. El abanico desde la primera esquina
+  // la divide en triángulos sin salirse de sus lados, así que sirve tanto para las
+  // caras de un cubo (cuatro esquinas) como para los rectángulos que cierran varias
+  // aristas.
+  function addQuad(target, points, normal, color, uvs) {
+    const coordinates = uvs || [[0, 1], [1, 1], [1, 0], [0, 0]];
+    for (let index = 1; index < points.length - 1; index += 1) {
+      for (const corner of [0, index, index + 1]) {
+        addMeshVertex(target, points[corner], normal, color, coordinates[corner]);
+      }
     }
   }
 
@@ -93,5 +98,60 @@
     target.push(second[0], second[1], second[2], color[0], color[1], color[2]);
   }
 
-  SDD3D.geometry = { isExposed, exposedCubeEdges, addMeshVertex, addQuad, addLine };
+  const AXES = ['x', 'y', 'z'];
+
+  // Caja que ocupa el modelo en la rejilla. Se usa para repartir la textura sobre el
+  // modelo entero en vez de repetirla en cada bloque.
+  function modelBounds() {
+    const bounds = {
+      min: { x: Infinity, y: Infinity, z: Infinity },
+      max: { x: -Infinity, y: -Infinity, z: -Infinity }
+    };
+    for (const cube of SDD3D.app.state.cubes.values()) {
+      for (const axis of AXES) {
+        bounds.min[axis] = Math.min(bounds.min[axis], cube[axis]);
+        bounds.max[axis] = Math.max(bounds.max[axis], cube[axis] + 1);
+      }
+    }
+    if (!Number.isFinite(bounds.min.x)) {
+      // Sin bloques no hay modelo que texturizar: se devuelve una caja unidad para no
+      // repartir por cero si alguna vez se pinta una cara suelta.
+      return {
+        min: { x: 0, y: 0, z: 0 },
+        max: { x: 1, y: 1, z: 1 }
+      };
+    }
+    return bounds;
+  }
+
+  // Ejes de la proyección plana de una cara: los dos ejes que no son el de su normal.
+  function uvAxesOf(normal) {
+    const axis = AXES.reduce((best, candidate) =>
+      Math.abs(normal[AXES.indexOf(candidate)]) > Math.abs(normal[AXES.indexOf(best)]) ? candidate : best, 'x');
+    const remaining = AXES.filter((candidate) => candidate !== axis);
+    return { axis, uAxis: remaining[0], vAxis: remaining[1] };
+  }
+
+  // Coordenadas de textura de un punto vistas desde la dirección de la cara. Se
+  // reparten con la caja del modelo, así que el mapa de textura cubre el modelo
+  // entero: agrandar el modelo estira la textura en vez de repetirla por bloque.
+  function worldUv(point, axes, bounds) {
+    const width = bounds.max[axes.uAxis] - bounds.min[axes.uAxis] || 1;
+    const height = bounds.max[axes.vAxis] - bounds.min[axes.vAxis] || 1;
+    return [
+      (point[axes.uAxis] - bounds.min[axes.uAxis]) / width,
+      (point[axes.vAxis] - bounds.min[axes.vAxis]) / height
+    ];
+  }
+
+  SDD3D.geometry = {
+    isExposed,
+    exposedCubeEdges,
+    addMeshVertex,
+    addQuad,
+    addLine,
+    modelBounds,
+    uvAxesOf,
+    worldUv
+  };
 })();

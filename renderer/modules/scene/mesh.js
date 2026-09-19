@@ -3,12 +3,59 @@
   'use strict';
 
   const { SDD3D } = window;
-  const { addLine, addQuad, isExposed, exposedCubeEdges } = SDD3D.geometry;
+  const { addLine, addQuad, isExposed, exposedCubeEdges, modelBounds, uvAxesOf, worldUv } = SDD3D.geometry;
   const { CUBE_CORNERS, CUBE_EDGES, COLORS, cubeFaces } = SDD3D;
+
+  // Cuadrilátero del modelo con la textura repartida por la caja del modelo entero:
+  // el mismo mapa cubre todos los bloques en vez de repetirse en cada uno.
+  function addWorldQuad(vertices, points, normal, color, bounds) {
+    const axes = uvAxesOf(normal);
+    addQuad(vertices, points, normal, color, points.map((point) => worldUv(point, axes, bounds)));
+  }
+
+  // Normal de una cara por sus puntos, en el mismo sentido que usa la exportación.
+  function faceNormalOf(points) {
+    const first = SDD3D.vec3.subtract(
+      { x: points[1][0], y: points[1][1], z: points[1][2] },
+      { x: points[0][0], y: points[0][1], z: points[0][2] }
+    );
+    const second = SDD3D.vec3.subtract(
+      { x: points[2][0], y: points[2][1], z: points[2][2] },
+      { x: points[0][0], y: points[0][1], z: points[0][2] }
+    );
+    const normal = SDD3D.vec3.normalize(SDD3D.vec3.cross(first, second));
+    return [normal.x, normal.y, normal.z];
+  }
+
+  function signatureOf(points) {
+    return points.map(SDD3D.names.keyOf).sort().join('|');
+  }
+
+  // Caras propias del modelo: las creadas al unir cuatro puntos y las que cierran las
+  // aristas dibujadas (ver modules/scene/topology.js). Una cara que repite otra —por
+  // ejemplo el cuadrado que cierran las cuatro aristas de unión de una cara de
+  // bloque— no se dibuja dos veces.
+  function modelFaces() {
+    const state = SDD3D.app.state;
+    const drawn = new Set();
+    const faces = [];
+    for (const face of state.faces) {
+      drawn.add(signatureOf(face));
+      faces.push({ points: face });
+    }
+    for (const face of SDD3D.topology.boundaryFaces()) {
+      const signature = signatureOf(face.points);
+      if (drawn.has(signature)) continue;
+      drawn.add(signature);
+      faces.push(face);
+    }
+    return faces;
+  }
 
   function buildMeshVertices() {
     const state = SDD3D.app.state;
     const vertices = [];
+    const bounds = modelBounds();
     for (const cube of state.cubes.values()) {
       const selected = state.selectedCube && SDD3D.app.samePoint(state.selectedCube, cube);
       const color = selected ? COLORS.selected : COLORS.cube;
@@ -17,19 +64,13 @@
         const points = face.corners.map((corner) => [
           cube.x + corner[0], cube.y + corner[1], cube.z + corner[2]
         ]);
-        addQuad(vertices, points, face.normal, color);
+        addWorldQuad(vertices, points, face.normal, color, bounds);
       }
     }
-    for (const face of state.faces) {
-      const points = face.map((point) => [point.x, point.y, point.z]);
-      const first = SDD3D.vec3.subtract({ x: points[1][0], y: points[1][1], z: points[1][2] }, {
-        x: points[0][0], y: points[0][1], z: points[0][2]
-      });
-      const second = SDD3D.vec3.subtract({ x: points[2][0], y: points[2][1], z: points[2][2] }, {
-        x: points[0][0], y: points[0][1], z: points[0][2]
-      });
-      const normalVector = SDD3D.vec3.normalize(SDD3D.vec3.cross(first, second));
-      addQuad(vertices, points, [normalVector.x, normalVector.y, normalVector.z], COLORS.customFace);
+    for (const face of modelFaces()) {
+      const points = face.points.map((point) => [point.x, point.y, point.z]);
+      const normal = face.normal || faceNormalOf(points);
+      addWorldQuad(vertices, points, normal, COLORS.customFace, bounds);
     }
     return vertices;
   }

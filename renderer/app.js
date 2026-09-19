@@ -14,5 +14,9 @@
   SDD3D.input.init();
 
   SDD3D.app.updateCountStatus();
+  // La configuración guardada se aplica la última, cuando la interfaz ya está
+  // enlazada: puede refrescar los botones del menú y volver a poner el modo y el
+  // bloque de partida de la sesión anterior.
+  SDD3D.settings.init();
   SDD3D.renderer.start();
 })();

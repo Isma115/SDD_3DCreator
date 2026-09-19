@@ -43,6 +43,14 @@
       y: state.selectedCube.y + offset.y,
       z: state.selectedCube.z + offset.z
     };
+    // Si en esa casilla ya hay un bloque no se coloca uno nuevo: ese bloque pasa a ser
+    // el punto de partida, de modo que se puede seguir añadiendo desde él.
+    const occupied = SDD3D.app.cubeAt(point);
+    if (occupied) {
+      SDD3D.app.setSelectedCube(occupied);
+      SDD3D.app.setStatus('Ese espacio ya está ocupado: bloque seleccionado');
+      return;
+    }
     // Colocar y mover el punto de partida cuentan como una sola acción: el bloque
     // nuevo pasa a ser el origen desde el que seguir encadenando con WASD.
     const placed = SDD3D.history.runAsOneChange(() => {
@@ -50,8 +58,8 @@
       SDD3D.app.setSelectedCube(point);
       return true;
     });
-    // Si el espacio estaba ocupado addCube ya ha avisado y la selección se queda
-    // donde estaba.
+    // Si la casilla se ha ocupado entre medias addCube ya ha avisado y la selección se
+    // queda donde estaba.
     if (!placed) return;
     SDD3D.app.setStatus(`Bloque colocado: ${key.toUpperCase()}`);
   }
@@ -112,6 +120,9 @@
       if (!state.pointer || state.pointer.id !== event.pointerId) return;
       const pointer = state.pointer;
       state.pointer = null;
+      // Un arrastre movió la cámara y un click cambió el modelo: las dos cosas forman
+      // parte de la configuración que se guarda.
+      SDD3D.settings.scheduleSave();
       // Arrastrar con el click izquierdo mueve la cámara; solo un click sin arrastre
       // elimina (modo Mouse) o selecciona (modo Teclado) el bloque apuntado.
       if (pointer.moved) return;
@@ -134,12 +145,17 @@
 
     canvas.addEventListener('dblclick', (event) => {
       clearTimeout(scheduleCanvasClick.timer);
-      if (state.pointsVisible) SDD3D.selection.selectPoint(event);
+      if (!state.pointsVisible) return;
+      SDD3D.selection.selectPoint(event);
+      // Unir puntos puede crear una cara, y las caras forman parte de lo que se
+      // guarda entre sesiones.
+      SDD3D.settings.scheduleSave();
     });
 
     canvas.addEventListener('wheel', (event) => {
       event.preventDefault();
       state.camera.distance = Math.max(2.5, Math.min(50, state.camera.distance * Math.exp(event.deltaY * 0.001)));
+      SDD3D.settings.scheduleSave();
     }, { passive: false });
 
     window.addEventListener('keydown', (event) => {
@@ -173,6 +189,7 @@
       if (!modalOpen && state.mode === 'keyboard' && ['w', 'a', 's', 'd'].includes(event.key.toLowerCase())) {
         event.preventDefault();
         keyboardPlace(event.key.toLowerCase());
+        SDD3D.settings.scheduleSave();
       }
     });
   }

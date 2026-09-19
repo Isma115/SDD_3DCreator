@@ -112,13 +112,31 @@
     return true;
   }
 
+  // Huella de una cara por las coordenadas de sus puntos: dos caras con los mismos
+  // puntos son la misma cara, con independencia del orden.
+  function faceSignature(points) {
+    return points.map(SDD3D.names.keyOf).sort().join('|');
+  }
+
+  function hasFace(points) {
+    const signature = faceSignature(points);
+    return state.faces.some((face) => faceSignature(face) === signature);
+  }
+
   // Igual que addEdge: solo devuelve true cuando la cara es nueva.
   function addFace(points) {
-    const signature = points.map(SDD3D.names.keyOf).sort().join('|');
-    const exists = state.faces.some((face) => face.map(SDD3D.names.keyOf).sort().join('|') === signature);
-    if (exists) return false;
+    if (hasFace(points)) return false;
     state.faces.push(points.map((point) => ({ ...point })));
     return true;
+  }
+
+  // Reemplaza las caras del modelo. Cada cara guarda sus propios puntos, copiados uno
+  // a uno: los objetos de la lista recibida se reutilizan entre operaciones y una
+  // cara que compartiera esas referencias cambiaría sola. Lo usa la configuración
+  // guardada al reabrir la aplicación.
+  function setFaces(faces) {
+    state.faces = faces.map((face) => face.map((point) => ({ x: point.x, y: point.y, z: point.z })));
+    return state.faces;
   }
 
   SDD3D.app = {
@@ -132,7 +150,10 @@
     removeCube,
     getModelPoints,
     samePoint,
+    faceSignature,
+    hasFace,
     addEdge,
-    addFace
+    addFace,
+    setFaces
   };
 })();

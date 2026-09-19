@@ -19,6 +19,7 @@
     } else {
       SDD3D.app.setStatus(mode === 'keyboard' ? 'Selecciona un bloque' : 'Mouse activo');
     }
+    SDD3D.settings.scheduleSave();
   }
 
   function toggleControlsMenu() {
@@ -37,6 +38,7 @@
     state.showCubeLines = !state.showCubeLines;
     dom.cubeLinesItem.setAttribute('aria-pressed', String(state.showCubeLines));
     SDD3D.app.setStatus(state.showCubeLines ? 'Líneas de cubos visibles' : 'Líneas de cubos ocultas');
+    SDD3D.settings.scheduleSave();
   }
 
   function togglePoints() {
@@ -49,11 +51,23 @@
       updatePointSelectionUi();
     }
     SDD3D.app.setStatus(state.pointsVisible ? 'Puntos visibles' : 'Puntos ocultos');
+    SDD3D.settings.scheduleSave();
   }
 
   // El botón de deseleccionar solo se muestra mientras haya algún punto seleccionado.
   function updatePointSelectionUi() {
     dom.clearPointsButton.hidden = SDD3D.app.state.pointPath.length === 0;
+  }
+
+  // Pone los botones de las opciones de vista en el estado que tiene el modelo. Lo usa
+  // la configuración guardada al arrancar, para que lo que se ve en el menú coincida
+  // con lo que se está dibujando.
+  function refreshToggleStates() {
+    const state = SDD3D.app.state;
+    dom.cubeLinesItem.setAttribute('aria-pressed', String(state.showCubeLines));
+    dom.pointsButton.setAttribute('aria-pressed', String(state.pointsVisible));
+    dom.pointsButton.textContent = state.pointsVisible ? 'Ocultar puntos' : 'Ver puntos';
+    updatePointSelectionUi();
   }
 
   function drawTextureAt(event) {
@@ -194,6 +208,7 @@
     toggleCubeLines,
     togglePoints,
     updatePointSelectionUi,
+    refreshToggleStates,
     openTextureModal,
     closeTextureModal,
     openExportModal,
