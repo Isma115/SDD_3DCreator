@@ -674,3 +674,74 @@ al repositorio y no se ha llegado a abrir la aplicación Electron.
 Recordatorio de uso: Electron no recarga los scripts de un renderer ya arrancado
 (véase el mismo aviso en la comprobación de la exportación). Para ver la corrección
 hay que reiniciar la aplicación o recargarla con `Cmd+R`.
+
+## Corrección · El borrado de un bloque esperaba 220 ms
+
+Aviso recibido: «al eliminar un cubo se eliminase rápido, tiene un pequeño delay que
+molesta». No es un requisito nuevo: el retardo es el del click que dejó constatado la
+Decisión 4 («retardo de 220 ms del click»), y ninguna Spec lo pide. No se ha tocado
+ningún fichero de Spec.
+
+### Decisión 32 · El click actúa al momento salvo sobre un punto de unión (Funcional)
+
+Causa: `input.js` atendía **todo** click sin arrastre con un `setTimeout` de 220 ms,
+sin mirar qué había bajo el puntero. Ese margen existe por un solo motivo: en modo
+Mouse el click izquierdo borra el bloque apuntado y el doble click elige un punto de
+unión, así que el primer click de un doble click sobre un punto no debe borrar el
+bloque que hay debajo. Se aplicaba también a los clicks que no pueden ser el primero
+de un doble click sobre un punto —puntos ocultos, o click lejos de cualquier punto— y
+al modo Teclado, donde el click solo selecciona. Esos son la mayoría de los clicks, y
+en ellos el margen era una espera sin nada que esperar.
+
+Solución: el retardo pasa a ser la excepción. El click se resuelve al momento y solo
+espera cuando bajo el puntero puede haber un doble click de puntos: con los puntos
+visibles (`state.pointsVisible`) y el click a distancia de un punto de unión
+(`picking.nearestPoint`, el mismo criterio que usa el doble click para elegir punto).
+
+- Puntos ocultos: no hay doble click que pueda chocar (`dblclick` sale sin hacer
+  nada), así que el click actúa al momento.
+- Puntos visibles y el click no cae sobre un punto: un doble click ahí no elegiría
+  ningún punto, así que el click actúa al momento.
+- Puntos visibles y el click cae sobre un punto: se mantiene la espera de 220 ms,
+  ahora en `SDD3D.DOUBLE_CLICK_GUARD_MS` (`config.js`), para que el doble click
+  llegue a cancelarla y elija punto igual que antes.
+
+El código del click se separa en `applyCanvasClick` (la acción: borrar en modo Mouse,
+seleccionar en modo Teclado) y `scheduleCanvasClick` (la decisión de cuándo
+aplicarla), de modo que lo que se retrasa es la acción y no el manejador.
+
+Ficheros tocados: `renderer/modules/input.js` y `renderer/modules/config.js`. Nada
+más cambia: ni el umbral de arrastre, ni el click derecho de colocar bloque, ni el
+doble click de puntos, ni el valor de la espera. La Decisión 4 conservaba «los
+tiempos (retardo de 220 ms del click, umbral de arrastre)» como parte del traslado de
+código; el umbral sigue como estaba y ese retardo pasa a aplicarse solo al caso de
+puntos descrito aquí.
+
+Efecto colateral aceptado: dos clicks seguidos sobre el mismo sitio actúan los dos,
+porque cada click es inmediato y ya no hay un segundo click que cancele al primero.
+Es lo que el usuario espera de cada click y no toca el gesto de puntos, que sigue
+cancelando el borrado del bloque de debajo.
+
+### Decisión 33 · Comprobaciones realizadas
+
+`node --check` sobre los dos ficheros y la aplicación cargada en un motor Chromium con
+WebGL, en una pestaña servida por HTTP desde el directorio `renderer/`, midiendo el
+tiempo entre el `pointerup` real (eventos de ratón inyectados por el protocolo de
+depuración) y la llamada a `removeCube`, y leyendo el estado del modelo:
+
+| Caso | Antes | Ahora |
+| --- | --- | --- |
+| Puntos ocultos, click sobre un bloque (modo Mouse) | 220 ms | 0 ms (misma marca de tiempo que el `pointerup`) |
+| Puntos visibles, click sobre un bloque lejos de los puntos | 220 ms | 0 ms (bloque borrado a los 50 ms) |
+| Puntos visibles, click sobre un punto de unión | 220 ms | 220 ms (se mantiene) |
+| Doble click sobre un punto de unión | punto elegido, sin borrar | punto elegido, sin borrar (`pointPath` = 1, bloque intacto) |
+| Modo Teclado, click sobre un bloque | 220 ms | 0 ms (bloque seleccionado a los 50 ms) |
+
+Recorrido de regresión sobre la misma pestaña: click derecho coloca el bloque pegado a
+la cara, click izquierdo lo borra, `Ctrl+z` y `Ctrl+y` deshacen y rehacen, sin errores
+de JavaScript ni de WebGL (`gl.getError()` en 0). El arnés es una pestaña temporal
+fuera del proyecto: no se ha añadido ninguna prueba al repositorio y no se ha llegado
+a abrir la aplicación Electron.
+
+Recordatorio de uso: Electron no recarga los scripts de un renderer ya arrancado; para
+ver el cambio hay que reiniciar la aplicación o recargarla con `Cmd+R`.

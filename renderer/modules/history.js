@@ -1,12 +1,15 @@
-// Historial de deshacer/rehacer (Ctrl+z y Ctrl+y). Guarda fotogramas del modelo
-// en lugar de operaciones inversas: son pocos datos y así ningún cambio se queda
-// fuera del historial aunque lo haga un módulo distinto.
+// #region Historial de deshacer y rehacer
+// Guarda fotogramas completos del modelo en lugar de operaciones inversas, de modo
+// que cualquier cambio efectivo pueda deshacerse aunque lo origine otro módulo.
 (() => {
   'use strict';
 
   const { SDD3D } = window;
   const { app, names } = SDD3D;
 
+  // #region Estado y snapshots
+  // Mantiene el límite de memoria, el cursor activo y las copias independientes
+  // que permiten restaurar un estado sin compartir referencias mutables.
   // Tope de fotogramas guardados. Se conservan los más recientes para acotar la
   // memoria si la sesión se alarga; el más antiguo pasa a ser el nuevo suelo.
   const MAX_ENTRIES = 100;
@@ -48,7 +51,11 @@
     app.setSelectedCube(snapshot.selectedCube);
     SDD3D.selection.setPointPath(snapshot.pointPath.map(copyPoint));
   }
+  // #endregion Estado y snapshots
 
+  // #region Registro y navegación
+  // Registra cambios efectivos, descarta la rama rehacible al crear una acción nueva
+  // y ofrece navegación agrupada para operaciones compuestas.
   // Guarda el estado actual como último fotograma. La llama la envoltura después de
   // cada cambio efectivo.
   function commit() {
@@ -93,7 +100,11 @@
       if (wasRecording) commit();
     }
   }
+  // #endregion Registro y navegación
 
+  // #region Inicialización y API pública
+  // Arranca el historial en el estado inicial, conecta las operaciones del modelo y
+  // publica los controles de deshacer/rehacer para la entrada de usuario.
   // Arranca el historial tomando el modelo ya inicializado como estado de partida:
   // el bloque central con el que abre la aplicación no es una acción que se deshaga.
   function init() {
@@ -140,3 +151,5 @@
     canRedo: () => history.index < history.entries.length - 1
   };
 })();
+// #endregion Inicialización y API pública
+// #endregion Historial de deshacer y rehacer

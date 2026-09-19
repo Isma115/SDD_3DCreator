@@ -1,4 +1,6 @@
-// Exportación del modelo: fusión de caras visibles y coplanares y serialización a OBJ.
+// #region Exportación a OBJ
+// Convierte la escena en una malla compacta, fusionando caras coplanares visibles
+// antes de serializar vértices y caras al formato OBJ.
 (() => {
   'use strict';
 
@@ -6,6 +8,9 @@
   const { cubeFaces } = SDD3D;
   const { isExposed } = SDD3D.geometry;
 
+  // #region Orientación y ciclos de caras
+  // Define los recorridos de rectángulos fusionados y conserva el sentido de
+  // bobinado de cada cara unidad según su normal.
   const GRID_AXES = ['x', 'y', 'z'];
   // Recorridos posibles de las esquinas de un rectángulo fusionado, relativos a su
   // esquina de menor coordenada. Cuál corresponde a cada dirección de cara se calcula
@@ -26,6 +31,10 @@
     return rotated[1][0] !== minU ? FORWARD_CYCLE : REVERSED_CYCLE;
   }
 
+  // #endregion Orientación y ciclos de caras
+  // #region Construcción de la malla exportable
+  // Deduplica vértices, evita caras repetidas, fusiona superficies de cubos y añade
+  // las caras propias o deducidas de las aristas.
   function buildExportMesh() {
     const state = SDD3D.app.state;
     const vertices = [];
@@ -160,6 +169,10 @@
     return { vertices, faces };
   }
 
+  // #endregion Construcción de la malla exportable
+  // #region Informe y descarga
+  // Calcula las métricas que muestra la interfaz y genera la descarga del fichero
+  // OBJ sin acoplar la lógica de exportación al DOM.
   // Cifras que se muestran en el aviso de exportación. "Antes" son las del modelo
   // tal y como está en la rejilla: cada bloque aporta sus 8 esquinas y sus 6 caras
   // (incluidas las que quedan ocultas entre bloques pegados). "Comprimido" son las
@@ -203,6 +216,12 @@
     return report;
   }
 
+  // #endregion Informe y descarga
+  // #region API de exportación
+  // Publica la acción de descarga y el constructor de malla para la interfaz y las
+  // comprobaciones de exportación.
   SDD3D.exportObj = exportObj;
   SDD3D.buildExportMesh = buildExportMesh;
 })();
+// #endregion API de exportación
+// #endregion Exportación a OBJ

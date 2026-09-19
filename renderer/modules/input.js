@@ -1,5 +1,6 @@
-// Entrada del usuario sobre el lienzo 3D: órbita con click izquierdo, colocación
-// y borrado de bloques, selección de puntos, zoom y atajos de teclado.
+// #region Entrada del usuario
+// Coordina los gestos del lienzo, la colocación y el borrado de bloques, la
+// selección de puntos, el zoom y los atajos de teclado.
 (() => {
   'use strict';
 
@@ -7,6 +8,9 @@
   const { dom } = SDD3D;
   const { camera } = SDD3D;
 
+  // #region Colocación mediante teclado
+  // Traduce WASD a direcciones de rejilla según la orientación actual de la cámara
+  // y agrupa la colocación con el cambio de selección en una sola acción.
   // Coloca un bloque en la dirección de la cámara a partir del bloque seleccionado.
   // Tras colocar, el bloque de partida pasa a ser el bloque nuevo: así se pueden
   // encadenar bloques con WASD sin tener que volver a seleccionar un bloque a mano.
@@ -64,23 +68,47 @@
     SDD3D.app.setStatus(`Bloque colocado: ${key.toUpperCase()}`);
   }
 
-  // Un click sin arrastre elimina (modo Mouse) o selecciona (modo Teclado) el bloque
-  // apuntado. Se retrasa para no dispararse al inicio de un doble click de puntos.
-  function scheduleCanvasClick(event) {
-    if (SDD3D.app.state.pointer?.moved) return;
-    clearTimeout(scheduleCanvasClick.timer);
-    scheduleCanvasClick.timer = setTimeout(() => {
-      const hit = SDD3D.picking.pickCube(event.clientX, event.clientY);
-      if (!hit) return;
-      if (SDD3D.app.state.mode === 'keyboard') {
-        SDD3D.app.setSelectedCube(hit.cube);
-        SDD3D.app.setStatus('Bloque seleccionado');
-      } else if (SDD3D.app.removeCube(hit.cube)) {
-        SDD3D.app.setStatus('Bloque eliminado');
-      }
-    }, 220);
+  // #endregion Colocación mediante teclado
+  // #region Clicks sobre el lienzo
+  // Decide si un click izquierdo se ejecuta de inmediato o espera solo cuando puede
+  // confundirse con el primer click de un doble click sobre un punto.
+  // Acción de un click sin arrastre: elimina (modo Mouse) o selecciona (modo Teclado)
+  // el bloque apuntado.
+  function applyCanvasClick(event) {
+    const hit = SDD3D.picking.pickCube(event.clientX, event.clientY);
+    if (!hit) return;
+    if (SDD3D.app.state.mode === 'keyboard') {
+      SDD3D.app.setSelectedCube(hit.cube);
+      SDD3D.app.setStatus('Bloque seleccionado');
+    } else if (SDD3D.app.removeCube(hit.cube)) {
+      SDD3D.app.setStatus('Bloque eliminado');
+    }
   }
 
+  // Un click sin arrastre elimina (modo Mouse) o selecciona (modo Teclado) el bloque
+  // apuntado. Se aplica al momento, porque es la respuesta que el usuario espera del
+  // click, salvo cuando cae sobre un punto de unión con los puntos visibles: ese click
+  // puede ser el primero de un doble click, y ese gesto elige punto en vez de borrar el
+  // bloque que hay debajo (ver el manejador de dblclick). Solo ese caso espera, y solo
+  // lo necesario para distinguir un click de un doble click.
+  function scheduleCanvasClick(event) {
+    const state = SDD3D.app.state;
+    if (state.pointer?.moved) return;
+    clearTimeout(scheduleCanvasClick.timer);
+    const overPoint = state.pointsVisible
+      ? SDD3D.picking.nearestPoint(event.clientX, event.clientY)
+      : null;
+    if (!overPoint) {
+      applyCanvasClick(event);
+      return;
+    }
+    scheduleCanvasClick.timer = setTimeout(() => applyCanvasClick(event), SDD3D.DOUBLE_CLICK_GUARD_MS);
+  }
+
+  // #endregion Clicks sobre el lienzo
+  // #region Gestos y atajos
+  // Enlaza los eventos de puntero, rueda, doble click y teclado con las operaciones
+  // del modelo, la cámara, la selección y el historial.
   function init() {
     const state = SDD3D.app.state;
     const canvas = dom.canvas;
@@ -90,13 +118,17 @@
     canvas.addEventListener('pointerdown', (event) => {
       canvas.setPointerCapture(event.pointerId);
       const orbit = event.button === 0 || (event.button === 2 && event.shiftKey);
+      // El click derecho sin Mayús arrastra la cámara por la pantalla, sin girar el
+      // modelo; si no hay arrastre, coloca el bloque pegado a la cara apuntada.
+      const pan = event.button === 2 && !event.shiftKey;
       state.pointer = {
         id: event.pointerId,
         button: event.button,
         x: event.clientX,
         y: event.clientY,
         moved: false,
-        orbit
+        orbit,
+        pan
       };
     });
 
@@ -105,15 +137,23 @@
       const deltaX = event.clientX - state.pointer.x;
       const deltaY = event.clientY - state.pointer.y;
       if (Math.hypot(deltaX, deltaY) > SDD3D.CLICK_THRESHOLD) state.pointer.moved = true;
-      // La cámara solo gira cuando el arrastre supera el umbral de click, para que
-      // un click izquierdo sobre un bloque siga eliminándolo o seleccionándolo.
-      if (state.pointer.orbit && state.pointer.moved) {
+      // La cámara solo se mueve cuando el arrastre supera el umbral de click, para que
+      // un click izquierdo sobre un bloque siga eliminándolo o seleccionándolo y un
+      // click derecho siga colocando el bloque pegado a la cara.
+      if (!state.pointer.moved) return;
+      if (state.pointer.pan) {
+        // Arrastrar con el click derecho desplaza la cámara por la pantalla: el modelo
+        // se desliza con el puntero y no gira (ver SDD3D.camera.pan).
+        SDD3D.camera.pan(deltaX, deltaY);
+      } else if (state.pointer.orbit) {
         state.camera.yaw -= deltaX * SDD3D.ORBIT_SENSITIVITY;
         // Arrastre vertical invertido: subir el puntero sube la cámara y bajarlo la baja.
         state.camera.pitch = Math.max(-1.35, Math.min(1.35, state.camera.pitch + deltaY * SDD3D.ORBIT_SENSITIVITY));
-        state.pointer.x = event.clientX;
-        state.pointer.y = event.clientY;
+      } else {
+        return;
       }
+      state.pointer.x = event.clientX;
+      state.pointer.y = event.clientY;
     });
 
     canvas.addEventListener('pointerup', (event) => {
@@ -123,8 +163,10 @@
       // Un arrastre movió la cámara y un click cambió el modelo: las dos cosas forman
       // parte de la configuración que se guarda.
       SDD3D.settings.scheduleSave();
-      // Arrastrar con el click izquierdo mueve la cámara; solo un click sin arrastre
-      // elimina (modo Mouse) o selecciona (modo Teclado) el bloque apuntado.
+      // Un arrastre mueve la cámara (órbita con el click izquierdo, desplazamiento con
+      // el derecho) y no toca el modelo; solo un click sin arrastre elimina (modo
+      // Mouse) o selecciona (modo Teclado) el bloque apuntado, o coloca un bloque
+      // nuevo si el click es el derecho.
       if (pointer.moved) return;
       if (pointer.button === 0) scheduleCanvasClick(event);
       if (pointer.button === 2 && !pointer.orbit) {
@@ -194,5 +236,11 @@
     });
   }
 
+  // #endregion Gestos y atajos
+  // #region API de entrada
+  // Expone la inicialización de listeners y la colocación WASD para el arranque del
+  // renderer y para las pruebas de interacción.
   SDD3D.input = { init, keyboardPlace };
 })();
+// #endregion API de entrada
+// #endregion Entrada del usuario

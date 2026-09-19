@@ -1,5 +1,6 @@
-// Rejilla 3D del entorno: extensión dinámica según los cubos colocados y
-// geometría de las líneas del suelo y de los planos auxiliares.
+// #region Construcción de la rejilla 3D
+// Calcula el radio visible a partir del modelo y genera las líneas del suelo y de
+// los dos planos auxiliares.
 (() => {
   'use strict';
 
@@ -29,5 +30,9 @@
     return lines;
   }
 
+  // #endregion Construcción de la rejilla 3D
+  // #region API de rejilla
+  // Expone los constructores que consume el bucle de renderizado.
   SDD3D.grid = { radius: gridRadius, buildLines: buildGridLines };
 })();
+// #endregion API de rejilla

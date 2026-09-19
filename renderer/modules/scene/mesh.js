@@ -1,4 +1,6 @@
-// Construcción de la geometría de dibujo del modelo: superficies y líneas.
+// #region Geometría de dibujo del modelo
+// Construye los vértices de superficies, aristas, puntos y contornos que el
+// renderer envía a WebGL en cada fotograma.
 (() => {
   'use strict';
 
@@ -6,6 +8,9 @@
   const { addLine, addQuad, isExposed, exposedCubeEdges, modelBounds, uvAxesOf, worldUv } = SDD3D.geometry;
   const { CUBE_CORNERS, CUBE_EDGES, COLORS, cubeFaces } = SDD3D;
 
+  // #region Superficies del modelo
+  // Resuelve caras propias y caras deducidas de la topología, calcula normales y
+  // distribuye la textura sobre la caja completa del modelo.
   // Cuadrilátero del modelo con la textura repartida por la caja del modelo entero:
   // el mismo mapa cubre todos los bloques en vez de repetirse en cada uno.
   function addWorldQuad(vertices, points, normal, color, bounds) {
@@ -75,6 +80,10 @@
     return vertices;
   }
 
+  // #endregion Superficies del modelo
+  // #region Líneas, puntos y selección
+  // Genera las líneas de unión, puntos visibles, aristas de cubos y contorno del
+  // bloque seleccionado para las distintas capas de dibujo.
   // Líneas de unión entre puntos y trazo provisional de la selección en curso.
   function buildEdgeLines() {
     const state = SDD3D.app.state;
@@ -137,6 +146,9 @@
     return lines;
   }
 
+  // #endregion Líneas, puntos y selección
+  // #region API de malla
+  // Expone los constructores de buffers utilizados por el bucle de renderizado.
   SDD3D.mesh = {
     buildMeshVertices,
     buildEdgeLines,
@@ -145,3 +157,5 @@
     buildSelectionLines
   };
 })();
+// #endregion API de malla
+// #endregion Geometría de dibujo del modelo

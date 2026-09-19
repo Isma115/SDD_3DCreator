@@ -1,4 +1,6 @@
-// Referencias a los nodos del DOM y contexto 2D del mapa de textura.
+// #region Referencias del DOM
+// Resuelve una sola vez los elementos de la interfaz y el contexto de dibujo de
+// la textura para que los demás módulos trabajen con referencias compartidas.
 (() => {
   'use strict';
 
@@ -33,3 +35,4 @@
     closeExportButton: document.getElementById('closeExportButton')
   };
 })();
+// #endregion Referencias del DOM

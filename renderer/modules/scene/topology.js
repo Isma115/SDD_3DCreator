@@ -1,4 +1,6 @@
-// Caras que cierran las aristas dibujadas al unir varios puntos.
+// #region Deducción de caras topológicas
+// Reconstruye caras planas y convexas a partir de las aristas dibujadas y de la
+// superficie expuesta de los cubos, sin almacenarlas como estado independiente.
 //
 // Una cara no se guarda en el modelo: se deduce de las aristas cada vez que hace
 // falta dibujar o exportar, de modo que al deshacer una unión la cara desaparece
@@ -15,6 +17,9 @@
 
   const { SDD3D } = window;
 
+  // #region Coordenadas y claves de planos
+  // Traduce entre ejes del espacio 3D y coordenadas locales de cada plano, y crea
+  // claves estables para lados y aristas compartidas.
   const GRID_AXES = ['x', 'y', 'z'];
   // Las dos caras de cada eje: la negativa y la positiva.
   const AXIS_SIGNS = [-1, 1];
@@ -49,6 +54,10 @@
     return SDD3D.names.edgeKeyOf(start, end);
   }
 
+  // #endregion Coordenadas y claves de planos
+  // #region Aristas por plano y superficie
+  // Agrupa las aristas por plano y filtra las casillas que realmente pertenecen a
+  // la superficie visible del modelo.
   // Aristas dibujadas de cada plano. Un plano es el hueco entre dos capas de rejilla
   // visto en un sentido: las casillas de normal positiva son las que quedan por
   // debajo del hueco y las de normal negativa las que quedan por encima. Una arista
@@ -96,6 +105,10 @@
     return false;
   }
 
+  // #endregion Aristas por plano y superficie
+  // #region Regiones y contornos
+  // Recorre cada región cerrada y encadena sus lados para obtener un ciclo de puntos
+  // candidato a cara.
   // Recorre una zona del plano: sus casillas y las aristas dibujadas de su frontera.
   // El recorrido se detiene si la zona se escapa por el borde de la superficie, que
   // es el único sitio por donde puede salir del plano.
@@ -155,6 +168,10 @@
     return null;
   }
 
+  // #endregion Regiones y contornos
+  // #region Validación geométrica y caras finales
+  // Simplifica los contornos, comprueba orientación y convexidad, y descarta las
+  // regiones abiertas o ambiguas antes de devolverlas al renderer o al exportador.
   function polygonArea(points, uAxis, vAxis) {
     let area = 0;
     for (let index = 0; index < points.length; index += 1) {
@@ -208,6 +225,9 @@
     return true;
   }
 
+  // #endregion Validación geométrica y caras finales
+  // #region API de topología
+  // Expone el cálculo bajo demanda de las caras deducidas.
   function boundaryFaces() {
     const state = SDD3D.app.state;
     const drawnByPlane = drawnEdgesByPlane(state);
@@ -238,3 +258,5 @@
 
   SDD3D.topology = { boundaryFaces };
 })();
+// #endregion API de topología
+// #endregion Deducción de caras topológicas

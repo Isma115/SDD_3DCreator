@@ -1,10 +1,13 @@
-// Selección de puntos de unión con doble click: trazo de aristas y creación de caras.
+// #region Selección de puntos y creación de caras
+// Gestiona el trazo temporal de puntos, las aristas resultantes y la creación de
+// caras cuando se completa el número de vértices requerido.
 (() => {
   'use strict';
 
   const { SDD3D } = window;
   const { samePoint } = SDD3D.app;
 
+  // #region Estado y gestos de selección
   // Cambia la selección de puntos en curso. Se centraliza en la misma forma que el
   // bloque seleccionado para que el historial y la interfaz tengan un solo camino.
   function setPointPath(points) {
@@ -49,5 +52,11 @@
     SDD3D.app.setStatus('Puntos deseleccionados');
   }
 
+  // #endregion Estado y gestos de selección
+  // #region API de selección
+  // Expone la selección por doble click, el borrado del trazo y la restauración que
+  // utiliza el historial.
   SDD3D.selection = { selectPoint, clearPointSelection, setPointPath };
 })();
+// #endregion API de selección
+// #endregion Selección de puntos y creación de caras

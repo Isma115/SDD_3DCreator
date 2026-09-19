@@ -1,8 +1,14 @@
+/* #region Base y tema */
+/* Define la paleta general, el modelo de caja y las reglas comunes de controles
+   para que toda la aplicación comparta la misma base visual. */
 :root {
   color-scheme: dark;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: #101319;
   color: #e8edf2;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 * {
@@ -35,6 +41,10 @@ button {
   display: none !important;
 }
 
+/* #endregion Base y tema */
+/* #region Barra de herramientas y menús */
+/* Estiliza la navegación superior, sus botones, el indicador de modo y los menús
+   desplegables de controles y visualización. */
 .toolbar {
   height: 52px;
   display: flex;
@@ -71,6 +81,7 @@ button {
   border-radius: 4px;
   padding: 7px 10px;
   color: #cbd3dc;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
 }
 
 .toolbar-button:hover,
@@ -118,6 +129,10 @@ button {
   color: #d5dde4;
 }
 
+/* #endregion Barra de herramientas y menús */
+/* #region Área de edición 3D */
+/* Reserva el espacio del canvas y coloca el mensaje de estado sobre la escena sin
+   interceptar los eventos del puntero. */
 .viewport-area {
   position: relative;
   width: 100%;
@@ -138,13 +153,20 @@ button {
   bottom: 14px;
   max-width: calc(100% - 32px);
   padding: 5px 8px;
-  border-radius: 3px;
-  background: rgba(16, 19, 25, 0.75);
+  border: 1px solid rgba(54, 65, 76, 0.6);
+  border-radius: 5px;
+  background: rgba(16, 19, 25, 0.72);
   color: #aeb9c4;
   font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  backdrop-filter: blur(4px);
   pointer-events: none;
 }
 
+/* #endregion Área de edición 3D */
+/* #region Modales y editor de textura */
+/* Presenta los paneles superpuestos y los controles para dibujar o importar el
+   mapa de textura. */
 .modal {
   position: fixed;
   z-index: 10;
@@ -183,6 +205,7 @@ button {
   color: #aeb8c2;
   font-size: 21px;
   line-height: 1;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
 }
 
 #textureCanvas {
@@ -228,6 +251,9 @@ button {
   pointer-events: none;
 }
 
+/* #endregion Modales y editor de textura */
+/* #region Estadísticas de exportación */
+/* Da formato al texto de confirmación y a la tabla de cifras del OBJ generado. */
 .file-button {
   margin-left: auto;
   padding: 6px 9px;
@@ -265,3 +291,4 @@ button {
   color: #74818d;
   font-size: 12px;
 }
+/* #endregion Estadísticas de exportación */

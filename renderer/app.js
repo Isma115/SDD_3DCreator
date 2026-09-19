@@ -1,4 +1,6 @@
-// Punto de entrada del renderer: arranca el bucle de dibujo y enlaza los eventos.
+// #region Arranque del renderer
+// Inicializa los subsistemas en un orden estable: modelo, historial, interfaz,
+// entrada, configuración persistida y finalmente el bucle de dibujo.
 (() => {
   'use strict';
 
@@ -20,3 +22,4 @@
   SDD3D.settings.init();
   SDD3D.renderer.start();
 })();
+// #endregion Arranque del renderer

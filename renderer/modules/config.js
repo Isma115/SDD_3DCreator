@@ -1,12 +1,17 @@
-// Namespace único compartido por los módulos del renderer. Se declara aquí porque
-// config.js es el primer script que carga index.html.
+// #region Namespace compartido
+// Todos los módulos del renderer colaboran a través de este único objeto global,
+// creado antes de cargar cualquier dependencia.
 window.SDD3D = window.SDD3D || {};
+// #endregion Namespace compartido
 
 (() => {
   'use strict';
 
   const { SDD3D } = window;
 
+  // #region Configuración visual y de interacción
+  // Reúne colores, límites de cámara y umbrales comunes para que el comportamiento
+  // de la interfaz y del renderizado se pueda ajustar desde un solo lugar.
   SDD3D.COLORS = {
     cube: [0.31, 0.72, 0.68],
     selected: [0.96, 0.73, 0.31],
@@ -29,11 +34,28 @@ window.SDD3D = window.SDD3D || {};
   SDD3D.GRID_FADE_START = 5;
   SDD3D.GRID_FADE_END = 90;
   SDD3D.CAMERA_FAR = 100;
+  // Campo de visión vertical de la proyección, en radianes. Lo usan la matriz de
+  // proyección y el desplazamiento de cámara (para que el modelo siga al puntero).
+  SDD3D.CAMERA_FOV = Math.PI / 3;
   // Giro de cámara por píxel arrastrado. Bajo a propósito: un arrastre lento y controlable.
   SDD3D.ORBIT_SENSITIVITY = 0.004;
-  // Píxeles de arrastre necesarios para distinguir un arrastre de un click.
-  SDD3D.CLICK_THRESHOLD = 3;
+  // Desplazamiento de cámara por píxel arrastrado, como múltiplo del desplazamiento
+  // exacto: con 1 el modelo sigue al puntero píxel a píxel, a cualquier distancia.
+  SDD3D.PAN_SENSITIVITY = 1;
+  // Píxeles de arrastre necesarios para distinguir un arrastre de un click. Se
+  // deja margen al temblor natural del ratón al pulsar: con 3 px, un click con algo
+  // de movimiento se interpretaba como arrastre y no quitaba ni colocaba nada.
+  SDD3D.CLICK_THRESHOLD = 6;
+  // Margen con el que un click sobre un punto de unión deja pasar un posible doble
+  // click antes de actuar: un click en modo Mouse borra y un doble click elige punto,
+  // así que solo ese click espera, para no borrar el bloque de debajo del punto. El
+  // resto de clicks se aplican al momento.
+  SDD3D.DOUBLE_CLICK_GUARD_MS = 220;
+  // #endregion Configuración visual y de interacción
 
+  // #region Geometría base del cubo
+  // Define las caras, esquinas y aristas del cubo unidad que reutilizan la malla,
+  // la selección y el cálculo de superficies visibles.
   // Caras del cubo unidad: normales y esquinas en orden antihorario visto desde fuera.
   SDD3D.cubeFaces = [
     {
@@ -74,4 +96,5 @@ window.SDD3D = window.SDD3D || {};
     [4, 5], [5, 6], [6, 7], [7, 4],
     [0, 4], [1, 5], [2, 6], [3, 7]
   ];
+  // #endregion Geometría base del cubo
 })();

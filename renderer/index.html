@@ -11,7 +11,13 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <!-- #region Estructura de la aplicación -->
+    <!-- Contiene la barra de herramientas, el lienzo de edición y los modales
+         auxiliares que se muestran sobre la escena. -->
     <div class="app-shell">
+      <!-- #region Barra de herramientas -->
+      <!-- Reúne los modos de control, las opciones de vista, la textura, los puntos
+           y la acción de exportación. -->
       <header class="toolbar">
         <div class="brand">SDD 3D Creator</div>
 
@@ -53,13 +59,22 @@
 
         <div id="modeLabel" class="mode-label">Mouse</div>
       </header>
+      <!-- #endregion Barra de herramientas -->
 
+      <!-- #region Lienzo y estado -->
+      <!-- El canvas ocupa el área de trabajo 3D y el estado comunica la acción
+           más reciente sin interrumpir la edición. -->
       <main class="viewport-area">
         <canvas id="viewport" aria-label="Espacio 3D de edición"></canvas>
         <div id="status" class="status" role="status" aria-live="polite">0 bloques · 0 puntos</div>
       </main>
+      <!-- #endregion Lienzo y estado -->
     </div>
+    <!-- #endregion Estructura de la aplicación -->
 
+    <!-- #region Editor de textura -->
+    <!-- Modal para pintar sobre el mapa de textura o importar una imagen desde el
+         sistema de archivos. -->
     <section id="textureModal" class="modal" hidden aria-labelledby="textureTitle">
       <div class="modal-card">
         <div class="modal-header">
@@ -77,7 +92,11 @@
         </div>
       </div>
     </section>
+    <!-- #endregion Editor de textura -->
 
+    <!-- #region Modal de exportación -->
+    <!-- Muestra el resumen y las métricas de compresión que rellena modules/ui.js
+         después de generar el OBJ. -->
     <!-- Aviso informativo de la exportación: los valores los rellena modules/ui.js
          con las cifras que devuelve la compresión del modelo. -->
     <section id="exportModal" class="modal" hidden aria-labelledby="exportTitle">
@@ -91,7 +110,11 @@
         <dl class="export-stats" id="exportStats"></dl>
       </div>
     </section>
+    <!-- #endregion Modal de exportación -->
 
+    <!-- #region Carga ordenada de módulos -->
+    <!-- Los scripts se cargan según sus dependencias: cada módulo registra su API
+         en window.SDD3D antes de que otro la consuma. -->
     <!-- Módulos en orden de dependencias: cada uno registra su parte en window.SDD3D. -->
     <script src="modules/config.js"></script>
     <script src="modules/names.js"></script>
@@ -113,5 +136,6 @@
     <script src="modules/settings.js"></script>
     <script src="modules/input.js"></script>
     <script src="app.js"></script>
+    <!-- #endregion Carga ordenada de módulos -->
   </body>
 </html>

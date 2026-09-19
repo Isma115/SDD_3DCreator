@@ -1,5 +1,6 @@
-// Configuración de la aplicación: lo que se elige en el menú superior y los ajustes
-// de vista se guardan al cerrar y se vuelven a aplicar al abrir la aplicación.
+// #region Configuración persistida de la aplicación
+// Guarda y recupera las opciones de vista, control y cámara, tolerando ficheros
+// incompletos o inválidos sin impedir que el editor arranque.
 //
 // El renderer no puede escribir ficheros, así que la lectura y la escritura las hace
 // el proceso principal (ver main.js y preload.js). Si la aplicación se abre fuera de
@@ -9,6 +10,9 @@
 
   const { SDD3D } = window;
 
+  // #region Estado, validación y valores por defecto
+  // Define el formato persistido y filtra cada campo antes de incorporarlo al estado
+  // activo.
   // Versión del formato guardado. Un fichero de otra versión se ignora en lugar de
   // intentar interpretarlo.
   const VERSION = 1;
@@ -33,6 +37,13 @@
   // Un punto de rejilla válido: tres coordenadas enteras.
   function isGridPoint(value) {
     return isPlainObject(value) && ['x', 'y', 'z'].every((axis) => Number.isInteger(value[axis]));
+  }
+
+  // El centro de la cámara no es un punto de rejilla: desplazarla arrastrando con el
+  // click derecho lo deja en coordenadas con decimales, así que solo se exige que las
+  // tres sean números finitos.
+  function isFinitePoint(value) {
+    return isPlainObject(value) && ['x', 'y', 'z'].every((axis) => isFiniteNumber(value[axis]));
   }
 
   function copyPoint(point) {
@@ -71,7 +82,7 @@
       for (const key of ['yaw', 'pitch', 'distance']) {
         if (isFiniteNumber(raw.camera[key])) settings.camera[key] = raw.camera[key];
       }
-      if (isGridPoint(raw.camera.target)) settings.camera.target = copyPoint(raw.camera.target);
+      if (isFinitePoint(raw.camera.target)) settings.camera.target = copyPoint(raw.camera.target);
     }
     if (isGridPoint(raw.selectedCube)) settings.selectedCube = copyPoint(raw.selectedCube);
     if (Array.isArray(raw.faces) && raw.faces.every((face) =>
@@ -81,6 +92,10 @@
     return settings;
   }
 
+  // #endregion Estado, validación y valores por defecto
+  // #region Lectura y escritura de preferencias
+  // Encapsula el puente con Electron y evita que un error de lectura o escritura
+  // afecte al funcionamiento de la sesión.
   function readFile() {
     const bridge = window.desktop;
     if (!bridge || typeof bridge.readConfig !== 'function') return null;
@@ -150,6 +165,8 @@
     save();
   }
 
+  // #endregion Lectura y escritura de preferencias
+  // #region Aplicación e inicialización
   // Vuelve a dejar el modelo y la interfaz en el estado guardado. El orden importa:
   // primero el modelo, luego los ajustes que refrescan los botones del menú, después
   // el modo —que elige qué bloque queda seleccionado— y por último el bloque de
@@ -191,5 +208,11 @@
     return settings;
   }
 
+  // #endregion Aplicación e inicialización
+  // #region API de configuración
+  // Publica los puntos de entrada que utilizan la interfaz, la entrada y el ciclo
+  // de vida de la ventana.
   SDD3D.settings = { init, save, scheduleSave, flush, apply, defaultSettings };
 })();
+// #endregion API de configuración
+// #endregion Configuración persistida de la aplicación

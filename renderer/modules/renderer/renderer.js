@@ -1,4 +1,6 @@
-// Núcleo WebGL: contexto, shaders, buffers, textura del modelo y bucle de dibujo.
+// #region Inicialización de WebGL
+// Obtiene el contexto de dibujo y deja un renderer vacío cuando el navegador no
+// ofrece WebGL, para que el arranque de la aplicación siga siendo seguro.
 (() => {
   'use strict';
 
@@ -23,6 +25,10 @@
 
   SDD3D.gl = gl;
 
+  // #endregion Inicialización de WebGL
+  // #region Shaders, programas y buffers
+  // Compila los programas de superficies y líneas y resuelve sus atributos y
+  // uniformes para poder reutilizarlos en todos los fotogramas.
   function compileShader(type, source) {
     const shader = gl.createShader(type);
     gl.shaderSource(shader, source);
@@ -136,6 +142,9 @@
     fadeEnd: gl.getUniformLocation(lineProgram, 'uFadeEnd')
   };
 
+  // #endregion Shaders, programas y buffers
+  // #region Textura del modelo
+  // Mantiene el canvas 2D editable y sincroniza su contenido con la textura WebGL.
   // Mapa de textura 2D: lienzo base liso.
   //
   // El mapa completo se aplica a cada cara del cubo (las UV de `geometry.addQuad`
@@ -161,6 +170,10 @@
     SDD3D.app.state.textureDirty = false;
   }
 
+  // #endregion Textura del modelo
+  // #region Dibujo y bucle de renderizado
+  // Sube mallas y líneas a los buffers, ajusta el viewport y compone las capas de la
+  // escena respetando profundidad, transparencia y selección.
   function drawMesh(vertices, viewProjection) {
     if (!vertices.length) return;
     gl.useProgram(meshProgram);
@@ -237,6 +250,10 @@
     requestAnimationFrame(render);
   }
 
+  // #endregion Dibujo y bucle de renderizado
+  // #region Arranque y API del renderer
+  // Inicializa la textura, activa las pruebas de profundidad y pone en marcha el
+  // ciclo de animación.
   function start() {
     initializeTextureCanvas();
     SDD3D.app.state.webglTexture = gl.createTexture();
@@ -251,3 +268,4 @@
 
   SDD3D.renderer = { start, render, resizeCanvas, uploadTexture };
 })();
+// #endregion Arranque y API del renderer
